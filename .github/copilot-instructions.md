@@ -1,5 +1,7 @@
 - use `pnpm`
 - use hard tabs
+- use Jest for unit tests
 - ideally this project is meant to be used in React project
 - assume shuffling functions will be supplied by the consuming application
 - do not add dependencies
+- if tests are consistently failing remember to run `pnpm jest --clearCache`

@@ -1,22 +1,34 @@
+import { describe, test, expect } from "@jest/globals";
 import { PokerHandEvaluator } from "../src/poker-evaluator";
 import { HandRank } from "../src/types";
-import { type PlayingCard, CardValue, CardSuite } from "../src/playing-card";
+import {
+	type PlayingCard,
+	CardValue,
+	CardSuite,
+	CardText,
+} from "../src/playing-card";
 
 describe("PokerHandEvaluator", () => {
+	const valueToText: Record<CardValue, CardText> = {
+		[CardValue.ACE]: CardText.ACE,
+		[CardValue.TWO]: CardText.TWO,
+		[CardValue.THREE]: CardText.THREE,
+		[CardValue.FOUR]: CardText.FOUR,
+		[CardValue.FIVE]: CardText.FIVE,
+		[CardValue.SIX]: CardText.SIX,
+		[CardValue.SEVEN]: CardText.SEVEN,
+		[CardValue.EIGHT]: CardText.EIGHT,
+		[CardValue.NINE]: CardText.NINE,
+		[CardValue.TEN]: CardText.TEN,
+		[CardValue.JACK]: CardText.JACK,
+		[CardValue.QUEEN]: CardText.QUEEN,
+		[CardValue.KING]: CardText.KING,
+	};
 	// Helper function to create cards
-	const createCard = (value: CardValue, suite: CardSuite): PlayingCard => ({
-		value,
-		suite,
-		numericValue:
-			value === CardValue.ACE
-				? 14
-				: value === CardValue.KING
-					? 13
-					: value === CardValue.QUEEN
-						? 12
-						: value === CardValue.JACK
-							? 11
-							: Number.parseInt(value as string),
+	const createCard = (value: CardValue, suit: CardSuite): PlayingCard => ({
+		value: value as CardValue,
+		rank: valueToText[value as CardValue],
+		suit: suit,
 	});
 
 	describe("Hand Ranking Detection", () => {

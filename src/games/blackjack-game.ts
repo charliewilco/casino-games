@@ -98,6 +98,8 @@ export class BlackjackGame {
 		return Array.from(this.players.values());
 	}
 
+	public getBets() {}
+
 	// Betting phase
 	public startBettingPhase(): void {
 		if (this.gameInProgress) {
@@ -172,7 +174,7 @@ export class BlackjackGame {
 		this.gameInProgress = true;
 
 		// Deal initial cards to all players with bets
-		for (const [playerId, hands] of playersWithBets) {
+		for (const [_playerId, hands] of playersWithBets) {
 			for (const hand of hands) {
 				if (hand.cards.length === 0) {
 					hand.cards.push(...this.shoe.draw(2));
@@ -653,7 +655,7 @@ export class BlackjackGame {
 
 			// If we had to convert any aces, check if we still have a soft 17
 			if (value > 21 && hasAceCounted11) {
-				let aces = this.dealer.cards.filter((c) => c.value === 1).length;
+				let _aces = this.dealer.cards.filter((c) => c.value === 1).length;
 				value = this.dealer.cards.reduce((sum, card) => {
 					if (card.value === 1) return sum + 1;
 					if (card.value >= 11) return sum + 10;

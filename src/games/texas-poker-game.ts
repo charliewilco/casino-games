@@ -712,7 +712,7 @@ export class TexasPokerGame {
 		return this.players.filter((p) => !p.folded && p.chips >= 0);
 	}
 
-	private getCallAmount(playerId: string): number {
+	public getCallAmount(playerId: string): number {
 		const player = this.findPlayer(playerId);
 		return Math.max(0, this.currentBet - player.currentBet);
 	}

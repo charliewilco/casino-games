@@ -29,7 +29,11 @@
 				"useConst": "off",
 				"noNonNullAssertion": "warn",
 				"useNumberNamespace": "warn",
-				"noParameterAssign": "warn"
+				"noParameterAssign": "warn",
+				"noInferrableTypes": "off"
+			},
+			"suspicious": {
+				"noExplicitAny": "warn"
 			}
 		}
 	},

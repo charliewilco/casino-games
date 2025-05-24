@@ -15,7 +15,8 @@
     "build": "tsdown",
     "lint": "biome lint",
     "format": "biome format --write",
-    "test": "jest"
+    "test": "jest",
+    "example": "node ./demo.js"
   },
   "keywords": [],
   "author": "",
@@ -29,6 +30,7 @@
     "jest": "^29.7.0",
     "publint": "^0.3.12",
     "tsdown": "^0.12.2",
+    "tsx": "^4.19.4",
     "typescript": "^5"
   },
   "pnpm": {

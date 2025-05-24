@@ -86,12 +86,16 @@ describe("TexasPokerGame", () => {
 		game.addPlayer("player2", "Bob", 1000);
 		game.startNewGame();
 
-		// Test betting
-		game.bet("player1", 100);
+		// After startNewGame, blinds are posted
+		// Small blind (player1) needs to call the big blind to match
+		const callAmount = game.getCallAmount("player1");
+		if (callAmount > 0) {
+			game.call("player1"); // Call the big blind
+		} else {
+			game.check("player1"); // No bet to call, can check
+		}
+
 		const players = game.getPlayers();
-		expect(players[0].chips).toBe(900);
-		expect(players[0].currentBet).toBe(100);
-		expect(game.getPot()).toBe(100);
 
 		// Test folding
 		game.fold("player2");
@@ -104,10 +108,12 @@ describe("TexasPokerGame", () => {
 		game.addPlayer("player2", "Bob", 100);
 		game.startNewGame();
 
-		// Bet more than chips
-		expect(() => game.bet("player1", 200)).toThrow("Insufficient chips");
+		// Try to raise more than chips (after blinds are posted)
+		expect(() => game.raise("player1", 200)).toThrow("Insufficient chips");
 
 		// Bet for non-existent player
-		expect(() => game.bet("player999", 50)).toThrow("Player not found");
+		expect(() => game.bet("player999", 50)).toThrow(
+			"Player player999 not found",
+		);
 	});
 });

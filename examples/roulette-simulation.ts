@@ -144,7 +144,7 @@ class RouletteSimulation {
 
 		if (baseAmount >= 5) {
 			// Straight up bet on lucky number
-			const luckyNumber = (parseInt(playerId.slice(-1)) || 7) % 37;
+			const luckyNumber = (Number.parseInt(playerId.slice(-1)) || 7) % 37;
 			this.game.placeBet(playerId, {
 				type: BetType.ROULETTE_STRAIGHT_UP,
 				amount: Math.min(baseAmount, 50),
@@ -226,7 +226,7 @@ class RouletteSimulation {
 		if (lastResult && lastResult.color !== "black") {
 			return Math.min(
 				player.balance,
-				10 * Math.pow(2, Math.min(4, player.betsPlaced % 5)),
+				10 * 2 ** Math.min(4, player.betsPlaced % 5),
 			);
 		}
 		return 5;
@@ -253,7 +253,9 @@ class RouletteSimulation {
 		}
 	}
 
-	private updatePlayerBalances(result: any): void {
+	private updatePlayerBalances(result: {
+		totalWinnings: { [playerId: string]: number };
+	}): void {
 		for (const [playerId, player] of this.players) {
 			const gamePlayer = this.game.getPlayer(playerId);
 			if (gamePlayer) {
@@ -264,7 +266,9 @@ class RouletteSimulation {
 		}
 	}
 
-	private showSpinResults(result: any): void {
+	private showSpinResults(result: {
+		totalWinnings: { [playerId: string]: number };
+	}): void {
 		console.log("\n--- Spin Results ---");
 		for (const [playerId, player] of this.players) {
 			const winnings = result.totalWinnings[playerId] || 0;
@@ -289,10 +293,10 @@ class RouletteSimulation {
 			.sort((a, b) => b[1] - a[1])
 			.slice(0, 5);
 
-		sortedNumbers.forEach(([number, count]) => {
+		for (const [number, count] of sortedNumbers) {
 			const percentage = ((count / this.spins) * 100).toFixed(1);
 			console.log(`  ${number}: ${count} times (${percentage}%)`);
-		});
+		}
 
 		// Color analysis
 		const redCount = this.history.filter((h) => h.color === "red").length;

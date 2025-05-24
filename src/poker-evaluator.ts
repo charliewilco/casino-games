@@ -1,6 +1,7 @@
 import type { PlayingCard } from "./playing-card";
 import { HandRank, type HandEvaluation } from "./types";
 
+// biome-ignore lint/complexity/noStaticOnlyClass: This class provides a cohesive API for poker hand evaluation and is used externally
 export class PokerHandEvaluator {
 	private static readonly RANK_VALUES: { [key: string]: number } = {
 		"2": 2,
@@ -39,25 +40,28 @@ export class PokerHandEvaluator {
 	 */
 	public static evaluateHand(cards: PlayingCard[]): HandEvaluation {
 		if (cards.length < 5) {
-			throw new Error("Need at least 5 cards to evaluate a poker hand");
+			throw new Error("Hand must contain at least 5 cards");
 		}
 
 		if (cards.length === 5) {
-			return this.evaluateFiveCards(cards);
+			return PokerHandEvaluator.evaluateFiveCards(cards);
 		}
 
 		// Generate all possible 5-card combinations
-		const combinations = this.getCombinations(cards, 5);
+		const combinations = PokerHandEvaluator.getCombinations(cards, 5);
 		let bestHand: HandEvaluation | null = null;
 
 		for (const combo of combinations) {
-			const evaluation = this.evaluateFiveCards(combo);
+			const evaluation = PokerHandEvaluator.evaluateFiveCards(combo);
 			if (!bestHand || evaluation.value > bestHand.value) {
 				bestHand = evaluation;
 			}
 		}
 
-		return bestHand!;
+		if (!bestHand) {
+			throw new Error("Failed to evaluate poker hand");
+		}
+		return bestHand;
 	}
 
 	/**
@@ -65,177 +69,260 @@ export class PokerHandEvaluator {
 	 */
 	private static evaluateFiveCards(cards: PlayingCard[]): HandEvaluation {
 		const sortedCards = [...cards].sort(
-			(a, b) => this.RANK_VALUES[b.rank] - this.RANK_VALUES[a.rank],
+			(a, b) =>
+				PokerHandEvaluator.RANK_VALUES[b.rank] -
+				PokerHandEvaluator.RANK_VALUES[a.rank],
 		);
 
 		// Check for flush
-		const isFlush = this.isFlush(sortedCards);
+		const isFlush = PokerHandEvaluator.isFlush(sortedCards);
 
 		// Check for straight
-		const straightInfo = this.isStraight(sortedCards);
+		const straightInfo = PokerHandEvaluator.isStraight(sortedCards);
 		const isStraight = straightInfo.isStraight;
 
 		// Count ranks
-		const rankCounts = this.getRankCounts(sortedCards);
+		const rankCounts = PokerHandEvaluator.getRankCounts(sortedCards);
 		const counts = Object.values(rankCounts).sort((a, b) => b - a);
 		const ranks = Object.keys(rankCounts).sort(
 			(a, b) =>
 				rankCounts[b] - rankCounts[a] ||
-				this.RANK_VALUES[b] - this.RANK_VALUES[a],
+				PokerHandEvaluator.RANK_VALUES[b] - PokerHandEvaluator.RANK_VALUES[a],
 		);
 
-		// Determine hand type and value
-		if (isStraight && isFlush) {
-			if (
-				straightInfo.highCard === 14 &&
-				sortedCards.some((c) => this.RANK_VALUES[c.rank] === 10)
-			) {
-				// Royal flush
-				return {
-					rank: HandRank.ROYAL_FLUSH,
-					value: HandRank.ROYAL_FLUSH * 1000000 + straightInfo.highCard,
-					description: "Royal Flush",
-					cards: sortedCards,
-					kickers: [],
-				};
-			} else {
-				// Straight flush
-				return {
-					rank: HandRank.STRAIGHT_FLUSH,
-					value: HandRank.STRAIGHT_FLUSH * 1000000 + straightInfo.highCard,
-					description: `Straight Flush, ${this.RANK_NAMES[straightInfo.highCard.toString()]} high`,
-					cards: sortedCards,
-					kickers: [],
-				};
+		// --- FIX: Return correct cards and kickers for each hand type ---
+		// Helper to get cards by rank
+		const getCardsByRank = (rank: string, count: number) =>
+			sortedCards.filter((c) => c.rank === rank).slice(0, count);
+		// Helper to get cards by suit
+		const getFlushCards = () => {
+			const suitCounts: { [suit: string]: PlayingCard[] } = {};
+			for (const c of sortedCards) {
+				suitCounts[c.suit] = suitCounts[c.suit] || [];
+				suitCounts[c.suit].push(c);
 			}
+			return (
+				Object.values(suitCounts)
+					.find((arr) => arr.length >= 5)
+					?.slice(0, 5) || []
+			);
+		};
+		// Helper to get straight cards
+		const getStraightCards = () => {
+			const values = sortedCards.map(
+				(c) => PokerHandEvaluator.RANK_VALUES[c.rank],
+			);
+			let straight: PlayingCard[] = [];
+			for (let i = 0; i < sortedCards.length; i++) {
+				straight = [sortedCards[i]];
+				let last = PokerHandEvaluator.RANK_VALUES[sortedCards[i].rank];
+				for (
+					let j = i + 1;
+					j < sortedCards.length && straight.length < 5;
+					j++
+				) {
+					const val = PokerHandEvaluator.RANK_VALUES[sortedCards[j].rank];
+					if (val === last - 1) {
+						straight.push(sortedCards[j]);
+						last = val;
+					}
+				}
+				if (straight.length === 5) return straight;
+			}
+			// Special case: wheel straight (A-2-3-4-5)
+			const ranks = sortedCards.map((c) => c.rank);
+			if (["A", "2", "3", "4", "5"].every((r) => ranks.includes(r))) {
+				const wheel = ["5", "4", "3", "2", "A"]
+					.map((r) => sortedCards.find((c) => c.rank === r))
+					.filter(Boolean) as PlayingCard[];
+				if (wheel.length === 5) return wheel;
+			}
+			return [];
+		};
+		// --- END FIX ---
+
+		// Group cards by suit for flush/straight flush detection
+		const suitGroups: { [suit: string]: PlayingCard[] } = {};
+		for (const c of sortedCards) {
+			suitGroups[c.suit] = suitGroups[c.suit] || [];
+			suitGroups[c.suit].push(c);
 		}
 
+		// --- FIX: Use helpers for correct cards/kickers ---
+		// Determine hand type and value
+		// --- FIX: Robust straight flush/royal flush detection for 5+ suited cards (always run before flush/straight) ---
+		for (const suit in suitGroups) {
+			const suited = suitGroups[suit];
+			if (suited.length >= 5) {
+				const combos = PokerHandEvaluator.getCombinations(suited, 5);
+				for (const combo of combos) {
+					const straightInfo = PokerHandEvaluator.isStraight(combo);
+					if (straightInfo.isStraight) {
+						const highCard = straightInfo.highCard;
+						if (highCard === 14 && combo.some((c) => c.rank === "10")) {
+							return {
+								rank: HandRank.ROYAL_FLUSH,
+								value: HandRank.ROYAL_FLUSH * 1000000 + highCard,
+								description: "Royal Flush",
+								cards: combo,
+								kickers: [],
+							};
+						}
+						return {
+							rank: HandRank.STRAIGHT_FLUSH,
+							value: HandRank.STRAIGHT_FLUSH * 1000000 + highCard,
+							description: `Straight Flush, ${PokerHandEvaluator.RANK_NAMES[combo[0].rank]} high`,
+							cards: combo,
+							kickers: [],
+						};
+					}
+				}
+			}
+		}
+		// --- END FIX ---
+		// Check for quads, full house, trips, two pair, one pair, high card using all cards
 		if (counts[0] === 4) {
-			// Four of a kind
 			const quadRank = ranks[0];
 			const kicker = ranks[1];
+			const handCards = getCardsByRank(quadRank, 4).concat(
+				getCardsByRank(kicker, 1),
+			);
 			return {
 				rank: HandRank.FOUR_OF_A_KIND,
 				value:
 					HandRank.FOUR_OF_A_KIND * 1000000 +
-					this.RANK_VALUES[quadRank] * 100 +
-					this.RANK_VALUES[kicker],
-				description: `Four ${this.RANK_NAMES[quadRank]}s`,
-				cards: sortedCards,
-				kickers: [],
+					PokerHandEvaluator.RANK_VALUES[quadRank] * 100 +
+					PokerHandEvaluator.RANK_VALUES[kicker],
+				description: `Four ${PokerHandEvaluator.RANK_NAMES[quadRank]}s`,
+				cards: handCards,
+				kickers: getCardsByRank(kicker, 1),
 			};
 		}
-
 		if (counts[0] === 3 && counts[1] === 2) {
-			// Full house
 			const tripRank = ranks[0];
 			const pairRank = ranks[1];
+			const handCards = getCardsByRank(tripRank, 3).concat(
+				getCardsByRank(pairRank, 2),
+			);
 			return {
 				rank: HandRank.FULL_HOUSE,
 				value:
 					HandRank.FULL_HOUSE * 1000000 +
-					this.RANK_VALUES[tripRank] * 100 +
-					this.RANK_VALUES[pairRank],
-				description: `Full House, ${this.RANK_NAMES[tripRank]}s over ${this.RANK_NAMES[pairRank]}s`,
-				cards: sortedCards,
+					PokerHandEvaluator.RANK_VALUES[tripRank] * 100 +
+					PokerHandEvaluator.RANK_VALUES[pairRank],
+				description: `Full House, ${PokerHandEvaluator.RANK_NAMES[tripRank]}s over ${PokerHandEvaluator.RANK_NAMES[pairRank]}s`,
+				cards: handCards,
 				kickers: [],
 			};
 		}
-
-		if (isFlush) {
-			// Flush
-			const values = sortedCards.map((c) => this.RANK_VALUES[c.rank]);
-			let value = HandRank.FLUSH * 1000000;
-			for (let i = 0; i < values.length; i++) {
-				value += values[i] * Math.pow(100, 4 - i);
-			}
-			return {
-				rank: HandRank.FLUSH,
-				value,
-				description: `Flush, ${this.RANK_NAMES[sortedCards[0].rank]} high`,
-				cards: sortedCards,
-				kickers: [],
-			};
-		}
-
-		if (isStraight) {
-			// Straight
-			return {
-				rank: HandRank.STRAIGHT,
-				value: HandRank.STRAIGHT * 1000000 + straightInfo.highCard,
-				description: `Straight, ${this.RANK_NAMES[straightInfo.highCard.toString()]} high`,
-				cards: sortedCards,
-				kickers: [],
-			};
-		}
-
 		if (counts[0] === 3) {
-			// Three of a kind
 			const tripRank = ranks[0];
-			const kicker1 = ranks[1];
-			const kicker2 = ranks[2];
+			const kickers = ranks.slice(1, 3);
+			const handCards = getCardsByRank(tripRank, 3).concat(
+				getCardsByRank(kickers[0], 1),
+				getCardsByRank(kickers[1], 1),
+			);
 			return {
 				rank: HandRank.THREE_OF_A_KIND,
 				value:
 					HandRank.THREE_OF_A_KIND * 1000000 +
-					this.RANK_VALUES[tripRank] * 10000 +
-					this.RANK_VALUES[kicker1] * 100 +
-					this.RANK_VALUES[kicker2],
-				description: `Three ${this.RANK_NAMES[tripRank]}s`,
-				cards: sortedCards,
-				kickers: [],
+					PokerHandEvaluator.RANK_VALUES[tripRank] * 10000 +
+					PokerHandEvaluator.RANK_VALUES[kickers[0]] * 100 +
+					PokerHandEvaluator.RANK_VALUES[kickers[1]],
+				description: `Three ${PokerHandEvaluator.RANK_NAMES[tripRank]}s`,
+				cards: handCards,
+				kickers: handCards.slice(3),
 			};
 		}
-
 		if (counts[0] === 2 && counts[1] === 2) {
-			// Two pair
 			const highPair = ranks[0];
 			const lowPair = ranks[1];
 			const kicker = ranks[2];
+			const handCards = getCardsByRank(highPair, 2).concat(
+				getCardsByRank(lowPair, 2),
+				getCardsByRank(kicker, 1),
+			);
 			return {
 				rank: HandRank.TWO_PAIR,
 				value:
 					HandRank.TWO_PAIR * 1000000 +
-					this.RANK_VALUES[highPair] * 10000 +
-					this.RANK_VALUES[lowPair] * 100 +
-					this.RANK_VALUES[kicker],
-				description: `Two Pair, ${this.RANK_NAMES[highPair]}s and ${this.RANK_NAMES[lowPair]}s`,
-				cards: sortedCards,
-				kickers: [],
+					PokerHandEvaluator.RANK_VALUES[highPair] * 10000 +
+					PokerHandEvaluator.RANK_VALUES[lowPair] * 100 +
+					PokerHandEvaluator.RANK_VALUES[kicker],
+				description: `Two Pair, ${PokerHandEvaluator.RANK_NAMES[highPair]}s and ${PokerHandEvaluator.RANK_NAMES[lowPair]}s`,
+				cards: handCards,
+				kickers: getCardsByRank(kicker, 1),
 			};
 		}
-
 		if (counts[0] === 2) {
-			// One pair
 			const pairRank = ranks[0];
-			const kickers = ranks.slice(1);
-			let value =
-				HandRank.PAIR * 1000000 + this.RANK_VALUES[pairRank] * 1000000;
-			for (let i = 0; i < kickers.length; i++) {
-				value += this.RANK_VALUES[kickers[i]] * Math.pow(100, 2 - i);
-			}
+			const kickers = ranks.slice(1, 4);
+			const handCards = getCardsByRank(pairRank, 2).concat(
+				getCardsByRank(kickers[0], 1),
+				getCardsByRank(kickers[1], 1),
+				getCardsByRank(kickers[2], 1),
+			);
 			return {
-				rank: HandRank.PAIR,
-				value,
-				description: `Pair of ${this.RANK_NAMES[pairRank]}s`,
-				cards: sortedCards,
+				rank: HandRank.ONE_PAIR,
+				value:
+					HandRank.ONE_PAIR * 1000000 +
+					PokerHandEvaluator.RANK_VALUES[pairRank] * 1000000 +
+					PokerHandEvaluator.RANK_VALUES[kickers[0]] * 10000 +
+					PokerHandEvaluator.RANK_VALUES[kickers[1]] * 100 +
+					PokerHandEvaluator.RANK_VALUES[kickers[2]],
+				description: `Pair of ${PokerHandEvaluator.RANK_NAMES[pairRank]}s`,
+				cards: handCards,
+				kickers: handCards.slice(2),
+			};
+		}
+		// Now, after all other hand types, check for flush or straight
+		for (const suit in suitGroups) {
+			const suited = suitGroups[suit];
+			if (suited.length >= 5) {
+				const flushCards = suited.slice(0, 5);
+				const values = flushCards.map(
+					(c) => PokerHandEvaluator.RANK_VALUES[c.rank],
+				);
+				let value = HandRank.FLUSH * 1000000;
+				for (let i = 0; i < values.length; i++) {
+					value += values[i] * 100 ** (4 - i);
+				}
+				return {
+					rank: HandRank.FLUSH,
+					value,
+					description: `Flush, ${PokerHandEvaluator.RANK_NAMES[flushCards[0].rank]} high`,
+					cards: flushCards,
+					kickers: flushCards.slice(1),
+				};
+			}
+		}
+		const straightCards = getStraightCards();
+		if (straightCards.length === 5) {
+			return {
+				rank: HandRank.STRAIGHT,
+				value:
+					HandRank.STRAIGHT * 1000000 +
+					PokerHandEvaluator.RANK_VALUES[straightCards[0].rank],
+				description: `Straight, ${PokerHandEvaluator.RANK_NAMES[straightCards[0].rank]} high`,
+				cards: straightCards,
 				kickers: [],
 			};
 		}
-
 		// High card
-		const values = sortedCards.map((c) => this.RANK_VALUES[c.rank]);
+		const handCards = sortedCards.slice(0, 5);
 		let value = HandRank.HIGH_CARD * 1000000;
-		for (let i = 0; i < values.length; i++) {
-			value += values[i] * Math.pow(100, 4 - i);
+		for (let i = 0; i < handCards.length; i++) {
+			value +=
+				PokerHandEvaluator.RANK_VALUES[handCards[i].rank] * 100 ** (4 - i);
 		}
 		return {
 			rank: HandRank.HIGH_CARD,
 			value,
-			description: `${this.RANK_NAMES[sortedCards[0].rank]} high`,
-			cards: sortedCards,
-			kickers: [],
+			description: `${PokerHandEvaluator.RANK_NAMES[handCards[0].rank]} High`,
+			cards: handCards,
+			kickers: handCards.slice(1),
 		};
+		// --- END FIX ---
 	}
 
 	private static isFlush(cards: PlayingCard[]): boolean {
@@ -247,31 +334,30 @@ export class PokerHandEvaluator {
 		isStraight: boolean;
 		highCard: number;
 	} {
-		const values = cards
-			.map((c) => this.RANK_VALUES[c.rank])
-			.sort((a, b) => b - a);
-
-		// Check for regular straight
-		for (let i = 0; i < values.length - 1; i++) {
-			if (values[i] - values[i + 1] !== 1) {
-				break;
+		// Remove duplicate values
+		const uniqueValues = Array.from(
+			new Set(cards.map((c) => PokerHandEvaluator.RANK_VALUES[c.rank])),
+		).sort((a, b) => b - a);
+		// Look for any sequence of 5 consecutive values
+		for (let i = 0; i <= uniqueValues.length - 5; i++) {
+			let isSeq = true;
+			for (let j = 0; j < 4; j++) {
+				if (uniqueValues[i + j] - uniqueValues[i + j + 1] !== 1) {
+					isSeq = false;
+					break;
+				}
 			}
-			if (i === values.length - 2) {
-				return { isStraight: true, highCard: values[0] };
+			if (isSeq) {
+				return { isStraight: true, highCard: uniqueValues[i] };
 			}
 		}
-
 		// Check for wheel straight (A-2-3-4-5)
 		if (
-			values[0] === 14 &&
-			values[1] === 5 &&
-			values[2] === 4 &&
-			values[3] === 3 &&
-			values[4] === 2
+			uniqueValues.includes(14) &&
+			uniqueValues.slice(-4).join(",") === "5,4,3,2"
 		) {
 			return { isStraight: true, highCard: 5 };
 		}
-
 		return { isStraight: false, highCard: 0 };
 	}
 
@@ -292,7 +378,7 @@ export class PokerHandEvaluator {
 		const combinations: T[][] = [];
 		for (let i = 0; i <= array.length - size; i++) {
 			const head = array[i];
-			const tailCombinations = this.getCombinations(
+			const tailCombinations = PokerHandEvaluator.getCombinations(
 				array.slice(i + 1),
 				size - 1,
 			);

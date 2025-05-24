@@ -9,18 +9,38 @@ describe("TexasPokerGame - Advanced Features", () => {
 
 	describe("Advanced Player Management", () => {
 		test("should handle multiple players with complex scenarios", () => {
-			game.addPlayer({ id: "player1", name: "Alice", chips: 1000, position: 0 });
+			game.addPlayer({
+				id: "player1",
+				name: "Alice",
+				chips: 1000,
+				position: 0,
+			});
 			game.addPlayer({ id: "player2", name: "Bob", chips: 1500, position: 1 });
-			game.addPlayer({ id: "player3", name: "Charlie", chips: 2000, position: 2 });
+			game.addPlayer({
+				id: "player3",
+				name: "Charlie",
+				chips: 2000,
+				position: 2,
+			});
 
 			expect(game.getPlayers()).toHaveLength(3);
 			expect(game.getCurrentPlayer()?.id).toBe("player1");
 		});
 
 		test("should manage dealer position rotation", () => {
-			game.addPlayer({ id: "player1", name: "Alice", chips: 1000, position: 0 });
+			game.addPlayer({
+				id: "player1",
+				name: "Alice",
+				chips: 1000,
+				position: 0,
+			});
 			game.addPlayer({ id: "player2", name: "Bob", chips: 1500, position: 1 });
-			game.addPlayer({ id: "player3", name: "Charlie", chips: 2000, position: 2 });
+			game.addPlayer({
+				id: "player3",
+				name: "Charlie",
+				chips: 2000,
+				position: 2,
+			});
 
 			game.startNewHand();
 			const dealerPos1 = game.getDealerPosition();
@@ -35,9 +55,19 @@ describe("TexasPokerGame - Advanced Features", () => {
 
 	describe("Comprehensive Betting System", () => {
 		beforeEach(() => {
-			game.addPlayer({ id: "player1", name: "Alice", chips: 1000, position: 0 });
+			game.addPlayer({
+				id: "player1",
+				name: "Alice",
+				chips: 1000,
+				position: 0,
+			});
 			game.addPlayer({ id: "player2", name: "Bob", chips: 1500, position: 1 });
-			game.addPlayer({ id: "player3", name: "Charlie", chips: 2000, position: 2 });
+			game.addPlayer({
+				id: "player3",
+				name: "Charlie",
+				chips: 2000,
+				position: 2,
+			});
 			game.startNewHand();
 		});
 
@@ -62,7 +92,7 @@ describe("TexasPokerGame - Advanced Features", () => {
 		test("should handle all-in scenarios", () => {
 			// Player with limited chips goes all-in
 			game.updatePlayerChips("player1", 75);
-			
+
 			game.allIn("player1");
 			expect(game.getCurrentBet("player1")).toBe(75);
 			expect(game.getPlayer("player1")?.isAllIn).toBe(true);
@@ -88,9 +118,19 @@ describe("TexasPokerGame - Advanced Features", () => {
 
 	describe("Game Flow Management", () => {
 		beforeEach(() => {
-			game.addPlayer({ id: "player1", name: "Alice", chips: 1000, position: 0 });
+			game.addPlayer({
+				id: "player1",
+				name: "Alice",
+				chips: 1000,
+				position: 0,
+			});
 			game.addPlayer({ id: "player2", name: "Bob", chips: 1500, position: 1 });
-			game.addPlayer({ id: "player3", name: "Charlie", chips: 2000, position: 2 });
+			game.addPlayer({
+				id: "player3",
+				name: "Charlie",
+				chips: 2000,
+				position: 2,
+			});
 		});
 
 		test("should progress through betting rounds", () => {
@@ -157,9 +197,19 @@ describe("TexasPokerGame - Advanced Features", () => {
 
 	describe("Pot Management", () => {
 		beforeEach(() => {
-			game.addPlayer({ id: "player1", name: "Alice", chips: 1000, position: 0 });
+			game.addPlayer({
+				id: "player1",
+				name: "Alice",
+				chips: 1000,
+				position: 0,
+			});
 			game.addPlayer({ id: "player2", name: "Bob", chips: 1500, position: 1 });
-			game.addPlayer({ id: "player3", name: "Charlie", chips: 2000, position: 2 });
+			game.addPlayer({
+				id: "player3",
+				name: "Charlie",
+				chips: 2000,
+				position: 2,
+			});
 			game.startNewHand();
 		});
 
@@ -177,7 +227,7 @@ describe("TexasPokerGame - Advanced Features", () => {
 		test("should handle side pots with all-in players", () => {
 			// Set up scenario where one player has limited chips
 			game.updatePlayerChips("player1", 100);
-			
+
 			game.allIn("player1"); // 100 chips
 			game.raise("player2", 200); // 250 total
 			game.call("player3"); // 250 total
@@ -191,7 +241,12 @@ describe("TexasPokerGame - Advanced Features", () => {
 
 	describe("Hand Evaluation Integration", () => {
 		beforeEach(() => {
-			game.addPlayer({ id: "player1", name: "Alice", chips: 1000, position: 0 });
+			game.addPlayer({
+				id: "player1",
+				name: "Alice",
+				chips: 1000,
+				position: 0,
+			});
 			game.addPlayer({ id: "player2", name: "Bob", chips: 1500, position: 1 });
 		});
 
@@ -203,10 +258,10 @@ describe("TexasPokerGame - Advanced Features", () => {
 			game.check("player2");
 
 			// Skip to showdown by checking through all rounds
-			["flop", "turn", "river"].forEach(() => {
+			for (const _round of ["flop", "turn", "river"]) {
 				game.check("player1");
 				game.check("player2");
-			});
+			}
 
 			const result = game.getShowdownResult();
 			expect(result).toBeDefined();
@@ -214,23 +269,30 @@ describe("TexasPokerGame - Advanced Features", () => {
 			expect(result?.handEvaluations).toHaveLength(2);
 
 			// Check that hand evaluations are valid
-			result?.handEvaluations.forEach(eval => {
-				expect(eval.rank).toBeGreaterThanOrEqual(0);
-				expect(eval.description).toBeDefined();
-				expect(eval.cards).toHaveLength(5);
-			});
+			if (result?.handEvaluations) {
+				for (const evaluation of result.handEvaluations) {
+					expect(evaluation.rank).toBeGreaterThanOrEqual(0);
+					expect(evaluation.description).toBeDefined();
+					expect(evaluation.cards).toHaveLength(5);
+				}
+			}
 		});
 	});
 
 	describe("Game Statistics and History", () => {
 		beforeEach(() => {
-			game.addPlayer({ id: "player1", name: "Alice", chips: 1000, position: 0 });
+			game.addPlayer({
+				id: "player1",
+				name: "Alice",
+				chips: 1000,
+				position: 0,
+			});
 			game.addPlayer({ id: "player2", name: "Bob", chips: 1500, position: 1 });
 		});
 
 		test("should track hand statistics", () => {
 			const initialHandNumber = game.getHandNumber();
-			
+
 			game.startNewHand();
 			game.fold("player1");
 			game.finishHand();
@@ -240,7 +302,7 @@ describe("TexasPokerGame - Advanced Features", () => {
 
 		test("should track betting rounds", () => {
 			game.startNewHand();
-			
+
 			game.raise("player1", 100);
 			game.call("player2");
 
@@ -256,11 +318,21 @@ describe("TexasPokerGame - Advanced Features", () => {
 			const customGame = new TexasPokerGame({
 				smallBlind: 10,
 				bigBlind: 20,
-				maxPlayers: 6
+				maxPlayers: 6,
 			});
 
-			customGame.addPlayer({ id: "player1", name: "Alice", chips: 1000, position: 0 });
-			customGame.addPlayer({ id: "player2", name: "Bob", chips: 1500, position: 1 });
+			customGame.addPlayer({
+				id: "player1",
+				name: "Alice",
+				chips: 1000,
+				position: 0,
+			});
+			customGame.addPlayer({
+				id: "player2",
+				name: "Bob",
+				chips: 1500,
+				position: 1,
+			});
 			customGame.startNewHand();
 
 			expect(customGame.getSmallBlind()).toBe(10);
@@ -270,18 +342,38 @@ describe("TexasPokerGame - Advanced Features", () => {
 		test("should enforce player limits", () => {
 			const limitedGame = new TexasPokerGame({ maxPlayers: 2 });
 
-			limitedGame.addPlayer({ id: "player1", name: "Alice", chips: 1000, position: 0 });
-			limitedGame.addPlayer({ id: "player2", name: "Bob", chips: 1500, position: 1 });
+			limitedGame.addPlayer({
+				id: "player1",
+				name: "Alice",
+				chips: 1000,
+				position: 0,
+			});
+			limitedGame.addPlayer({
+				id: "player2",
+				name: "Bob",
+				chips: 1500,
+				position: 1,
+			});
 
 			expect(() => {
-				limitedGame.addPlayer({ id: "player3", name: "Charlie", chips: 2000, position: 2 });
+				limitedGame.addPlayer({
+					id: "player3",
+					name: "Charlie",
+					chips: 2000,
+					position: 2,
+				});
 			}).toThrow("Maximum number of players");
 		});
 	});
 
 	describe("Error Handling", () => {
 		beforeEach(() => {
-			game.addPlayer({ id: "player1", name: "Alice", chips: 1000, position: 0 });
+			game.addPlayer({
+				id: "player1",
+				name: "Alice",
+				chips: 1000,
+				position: 0,
+			});
 			game.addPlayer({ id: "player2", name: "Bob", chips: 1500, position: 1 });
 		});
 
@@ -297,7 +389,7 @@ describe("TexasPokerGame - Advanced Features", () => {
 
 		test("should handle game state errors", () => {
 			game.startNewHand();
-			
+
 			expect(() => {
 				game.startNewHand(); // Hand already in progress
 			}).toThrow("Hand already in progress");
@@ -306,8 +398,13 @@ describe("TexasPokerGame - Advanced Features", () => {
 
 	describe("Legacy Compatibility", () => {
 		test("should support legacy methods", () => {
-			game.addPlayer({ id: "player1", name: "Alice", chips: 1000, position: 0 });
-			
+			game.addPlayer({
+				id: "player1",
+				name: "Alice",
+				chips: 1000,
+				position: 0,
+			});
+
 			// Test legacy bet method
 			expect(() => {
 				game.bet("player1", 100);
@@ -322,7 +419,7 @@ describe("TexasPokerGame - Advanced Features", () => {
 		test("should maintain simple game flow", () => {
 			// Test the old simple game pattern
 			game.startNewGame();
-			
+
 			// Should be able to get pot without errors
 			const pot = game.getPot();
 			expect(pot).toBeGreaterThanOrEqual(0);

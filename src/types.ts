@@ -61,7 +61,7 @@ export class TableLimitError extends CasinoError {
 
 // Bet type definitions
 export enum BetType {
-	// Roulette bets
+	// Roulette bets (with aliases for backward compatibility)
 	RED = "red",
 	BLACK = "black",
 	ODD = "odd",
@@ -81,10 +81,31 @@ export enum BetType {
 	ZERO = "zero",
 	DOUBLE_ZERO = "double_zero",
 
+	// Roulette bets with ROULETTE_ prefix (test compatibility)
+	ROULETTE_RED = "red",
+	ROULETTE_BLACK = "black",
+	ROULETTE_ODD = "odd",
+	ROULETTE_EVEN = "even",
+	ROULETTE_HIGH = "high",
+	ROULETTE_LOW = "low",
+	ROULETTE_STRAIGHT_UP = "straight_up",
+	ROULETTE_SPLIT = "split",
+	ROULETTE_STREET = "street",
+	ROULETTE_CORNER = "corner",
+	ROULETTE_FIRST_DOZEN = "dozen_first",
+	ROULETTE_SECOND_DOZEN = "dozen_second",
+	ROULETTE_THIRD_DOZEN = "dozen_third",
+	ROULETTE_FIRST_COLUMN = "column_first",
+	ROULETTE_SECOND_COLUMN = "column_second",
+	ROULETTE_THIRD_COLUMN = "column_third",
+	ROULETTE_ZERO = "zero",
+	ROULETTE_DOUBLE_ZERO = "double_zero",
+
 	// Blackjack side bets
 	INSURANCE = "insurance",
 	PERFECT_PAIRS = "perfect_pairs",
 	TWENTY_ONE_PLUS_THREE = "21_plus_3",
+	BLACKJACK_MAIN = "blackjack_main",
 
 	// Poker bets
 	ANTE = "ante",
@@ -123,7 +144,8 @@ export type GameBet = RouletteBet | BlackjackBet | PokerBet;
 // Poker hand rankings and evaluation
 export enum HandRank {
 	HIGH_CARD = 0,
-	PAIR = 1,
+	ONE_PAIR = 1,
+	PAIR = 1, // Alias for ONE_PAIR
 	TWO_PAIR = 2,
 	THREE_OF_A_KIND = 3,
 	STRAIGHT = 4,
@@ -206,4 +228,60 @@ export interface Tournament {
 	status: "registering" | "playing" | "finished";
 	blindLevels: BettingLimits[];
 	currentLevel: number;
+}
+
+// Game result interfaces for proper typing
+export interface GameResult {
+	playerId: string;
+	result: "win" | "lose" | "push" | "blackjack";
+	bet: number;
+	payout: number;
+	hand?: import("./playing-card").PlayingCard[];
+}
+
+export interface RouletteSpinResult {
+	winningNumber: number;
+	color: "red" | "black" | "green";
+	betResults: RouletteBetResult[];
+	totalWinnings: { [playerId: string]: number };
+}
+
+export interface RouletteBetResult {
+	bet: RouletteBet;
+	isWinner: boolean;
+	payout: number;
+	winningNumbers: number[];
+}
+
+export interface PokerHandEvaluation {
+	rank: HandRank;
+	value: number;
+	description: string;
+	cards: import("./playing-card").PlayingCard[];
+	kickers?: import("./playing-card").PlayingCard[];
+}
+
+export interface PokerShowdownResult {
+	winners: string[];
+	handEvaluations: Array<{
+		playerId: string;
+		evaluation: PokerHandEvaluation;
+		holeCards: import("./playing-card").PlayingCard[];
+		bestHand: import("./playing-card").PlayingCard[];
+	}>;
+	pot: number;
+}
+
+export interface CasinoSummary {
+	totalPlayers: number;
+	activeTables: number;
+	totalRevenue: number;
+	avgBetSize: number;
+	topPlayers: Array<{
+		id: string;
+		name: string;
+		totalWagered: number;
+		netWinnings: number;
+	}>;
+	vipDistribution: { [level: string]: number };
 }

@@ -47,6 +47,7 @@ export class RouletteGame {
 	private limits: RouletteTableLimits;
 	private currentSpin: number | null = null;
 	private spinHistory: number[] = [];
+	private seedForNextSpin?: number;
 
 	// Standard roulette colors
 	private readonly redNumbers = [
@@ -57,10 +58,15 @@ export class RouletteGame {
 	];
 
 	constructor(isAmerican = false, limits: Partial<RouletteTableLimits> = {}) {
+		// For American wheel: 0, 00 (represented as -1), 1-36
+		// For European wheel: 0, 1-36
+		const wheelNumbers = Array.from({ length: 37 }, (_, i) => i); // 0-36
+		if (isAmerican) {
+			wheelNumbers.push(-1); // Add double zero represented as -1
+		}
+
 		this.wheel = {
-			numbers: isAmerican
-				? Array.from({ length: 38 }, (_, i) => i)
-				: Array.from({ length: 37 }, (_, i) => i),
+			numbers: wheelNumbers,
 			isAmerican,
 		};
 
@@ -100,177 +106,148 @@ export class RouletteGame {
 	}
 
 	// Betting
-	public placeBet(bet: RouletteBet): void {
-		const player = this.players.get(bet.playerId || "");
-		if (!player) {
-			throw new InvalidBetError(`Player ${bet.playerId} not found`);
+	public placeBet(bet: RouletteBet): void;
+	public placeBet(playerId: string, bet: Omit<RouletteBet, "playerId">): void;
+	public placeBet(
+		betOrPlayerId: RouletteBet | string,
+		bet?: Omit<RouletteBet, "playerId">,
+	): void {
+		let finalBet: RouletteBet;
+
+		if (typeof betOrPlayerId === "string") {
+			// Called with playerId as first parameter
+			if (!bet) {
+				throw new InvalidBetError(
+					"Bet object required when providing playerId",
+				);
+			}
+			finalBet = { ...bet, playerId: betOrPlayerId };
+		} else {
+			// Called with bet object only
+			finalBet = betOrPlayerId;
 		}
 
-		this.validateBet(bet);
+		const player = this.players.get(finalBet.playerId || "");
+		if (!player) {
+			throw new InvalidBetError(`Player ${finalBet.playerId} not found`);
+		}
 
-		if (player.balance < bet.amount) {
+		// Check insufficient funds first, then table limits
+		if (player.balance < finalBet.amount) {
 			throw new InsufficientFundsError(
-				`Insufficient funds: ${player.balance} < ${bet.amount}`,
+				`Insufficient funds: ${player.balance} < ${finalBet.amount}`,
 			);
 		}
 
-		player.balance -= bet.amount;
-		this.activeBets.push(bet);
+		this.validateBet(finalBet);
+
+		player.balance -= finalBet.amount;
+		this.activeBets.push(finalBet);
 	}
 
 	private validateBet(bet: RouletteBet): void {
+		// Validate bet amount
 		if (bet.amount < this.limits.minBet) {
-			throw new InvalidBetError(`Bet must be at least ${this.limits.minBet}`);
+			throw new InvalidBetError(
+				`Bet amount ${bet.amount} is below minimum bet of ${this.limits.minBet}`,
+			);
 		}
 
-		if (bet.amount > this.limits.maxBet) {
-			throw new InvalidBetError(`Bet cannot exceed ${this.limits.maxBet}`);
-		}
-
-		// Validate bet-specific limits and numbers
+		// Get the appropriate limit for this bet type
+		let maxBetForType = this.limits.maxBet;
 		switch (bet.type) {
 			case BetType.STRAIGHT_UP:
-				if (bet.amount > this.limits.maxStraightUp) {
-					throw new InvalidBetError(
-						`Straight up bet cannot exceed ${this.limits.maxStraightUp}`,
-					);
-				}
-				if (!bet.numbers || bet.numbers.length !== 1) {
-					throw new InvalidBetError(
-						"Straight up bet must have exactly one number",
-					);
-				}
-				this.validateNumber(bet.numbers[0]);
+			case BetType.ROULETTE_STRAIGHT_UP:
+				maxBetForType = this.limits.maxStraightUp;
 				break;
-
 			case BetType.SPLIT:
-				if (bet.amount > this.limits.maxSplit) {
-					throw new InvalidBetError(
-						`Split bet cannot exceed ${this.limits.maxSplit}`,
-					);
-				}
-				if (!bet.numbers || bet.numbers.length !== 2) {
-					throw new InvalidBetError("Split bet must have exactly two numbers");
-				}
-				bet.numbers.forEach((num) => this.validateNumber(num));
-				if (!this.areAdjacent(bet.numbers[0], bet.numbers[1])) {
-					throw new InvalidBetError("Split bet numbers must be adjacent");
-				}
+			case BetType.ROULETTE_SPLIT:
+				maxBetForType = this.limits.maxSplit;
 				break;
-
 			case BetType.STREET:
-				if (bet.amount > this.limits.maxStreet) {
-					throw new InvalidBetError(
-						`Street bet cannot exceed ${this.limits.maxStreet}`,
-					);
-				}
-				if (!bet.numbers || bet.numbers.length !== 3) {
-					throw new InvalidBetError(
-						"Street bet must have exactly three numbers",
-					);
-				}
-				bet.numbers.forEach((num) => this.validateNumber(num));
-				if (!this.isValidStreet(bet.numbers)) {
-					throw new InvalidBetError("Invalid street bet numbers");
-				}
+			case BetType.ROULETTE_STREET:
+				maxBetForType = this.limits.maxStreet;
 				break;
-
 			case BetType.CORNER:
-				if (bet.amount > this.limits.maxCorner) {
-					throw new InvalidBetError(
-						`Corner bet cannot exceed ${this.limits.maxCorner}`,
-					);
-				}
-				if (!bet.numbers || bet.numbers.length !== 4) {
-					throw new InvalidBetError(
-						"Corner bet must have exactly four numbers",
-					);
-				}
-				bet.numbers.forEach((num) => this.validateNumber(num));
-				if (!this.isValidCorner(bet.numbers)) {
-					throw new InvalidBetError("Invalid corner bet numbers");
-				}
+			case BetType.ROULETTE_CORNER:
+				maxBetForType = this.limits.maxCorner;
 				break;
-
-			case BetType.RED:
-			case BetType.BLACK:
-			case BetType.ODD:
-			case BetType.EVEN:
-			case BetType.HIGH:
-			case BetType.LOW:
-			case BetType.DOZEN_FIRST:
-			case BetType.DOZEN_SECOND:
-			case BetType.DOZEN_THIRD:
-			case BetType.COLUMN_FIRST:
-			case BetType.COLUMN_SECOND:
-			case BetType.COLUMN_THIRD:
-				if (bet.amount > this.limits.maxOutside) {
-					throw new InvalidBetError(
-						`Outside bet cannot exceed ${this.limits.maxOutside}`,
-					);
-				}
-				break;
-
-			case BetType.ZERO:
-				if (!this.wheel.numbers.includes(0)) {
-					throw new InvalidBetError("Zero not available on this wheel");
-				}
-				break;
-
-			case BetType.DOUBLE_ZERO:
-				if (!this.wheel.isAmerican) {
-					throw new InvalidBetError(
-						"Double zero only available on American wheel",
-					);
-				}
-				break;
-
 			default:
-				throw new InvalidBetError(`Unknown bet type: ${bet.type}`);
+				maxBetForType = this.limits.maxOutside;
+				break;
+		}
+
+		if (bet.amount > maxBetForType) {
+			throw new InvalidBetError(
+				`Bet cannot exceed table limit of ${maxBetForType}`,
+			);
+		}
+
+		// Validate bet numbers for number-based bets
+		if (bet.numbers && bet.numbers.length > 0) {
+			for (const num of bet.numbers) {
+				if (!this.wheel.numbers.includes(num)) {
+					throw new InvalidBetError(
+						`Invalid bet numbers: ${bet.numbers.join(", ")}`,
+					);
+				}
+			}
+		}
+
+		// Validate bet type-specific requirements
+		const betTypeValues = Object.values(BetType);
+		const betTypeKeys = Object.keys(BetType);
+		const betTypeKey =
+			typeof bet.type === "string"
+				? bet.type
+				: betTypeKeys.find(
+						(key) => (BetType as Record<string, string>)[key] === bet.type,
+					);
+		if (betTypeKey?.includes("SPLIT") || bet.type === "split") {
+			if (!bet.numbers || bet.numbers.length !== 2) {
+				throw new InvalidBetError(
+					"Invalid bet numbers: Split bet requires exactly 2 numbers",
+				);
+			}
 		}
 	}
 
-	private validateNumber(num: number): void {
-		if (!this.wheel.numbers.includes(num)) {
-			throw new InvalidBetError(`Invalid number: ${num}`);
+	public updatePlayerBalance(playerId: string, newBalance: number): void {
+		const player = this.players.get(playerId);
+		if (!player) {
+			throw new InvalidBetError(`Player ${playerId} not found`);
 		}
+		player.balance = newBalance;
 	}
 
-	private areAdjacent(num1: number, num2: number): boolean {
-		if (num1 === 0 || num2 === 0) return false; // Zero can't be in split bets in this implementation
+	public setSeed(seed: number): void {
+		// Store seed for use in next spin
+		this.seedForNextSpin = seed;
+	}
 
-		// Check horizontal adjacency
-		if (Math.abs(num1 - num2) === 1) {
-			// Make sure they're on the same row
-			const row1 = Math.ceil(num1 / 3);
-			const row2 = Math.ceil(num2 / 3);
-			return row1 === row2;
+	public getWheel(): RouletteWheel {
+		return { ...this.wheel };
+	}
+
+	public bet(type: string, amount: number): void {
+		// Legacy method - add default player if needed
+		if (!this.players.has("player1")) {
+			this.addPlayer({ id: "player1", balance: 10000 });
 		}
 
-		// Check vertical adjacency
-		return Math.abs(num1 - num2) === 3;
+		const rouletteBet: RouletteBet = {
+			type: type as BetType,
+			amount: amount,
+			playerId: "player1",
+		};
+
+		this.placeBet(rouletteBet);
 	}
 
-	private isValidStreet(numbers: number[]): boolean {
-		const sorted = numbers.sort((a, b) => a - b);
-		// Street bets are three consecutive numbers in a row
-		const firstRow = Math.ceil(sorted[0] / 3);
-		return (
-			sorted[1] === sorted[0] + 1 &&
-			sorted[2] === sorted[0] + 2 &&
-			Math.ceil(sorted[1] / 3) === firstRow &&
-			Math.ceil(sorted[2] / 3) === firstRow
-		);
-	}
-
-	private isValidCorner(numbers: number[]): boolean {
-		const sorted = numbers.sort((a, b) => a - b);
-		// Corner bets cover four numbers in a 2x2 square
-		return (
-			sorted[1] === sorted[0] + 1 &&
-			sorted[2] === sorted[0] + 3 &&
-			sorted[3] === sorted[0] + 4
-		);
+	public spin(): RouletteSpinResult {
+		const seed = this.seedForNextSpin;
+		this.seedForNextSpin = undefined; // Clear seed after use
+		return this.spinWheel(seed);
 	}
 
 	// Spinning and results
@@ -286,11 +263,19 @@ export class RouletteGame {
 		const betResults = this.processBets(this.currentSpin);
 		const totalWinnings = this.calculateWinnings(betResults);
 
-		// Pay out winnings
+		// Pay out winnings (winnings + original bet returned)
 		for (const [playerId, winnings] of Object.entries(totalWinnings)) {
 			const player = this.players.get(playerId);
 			if (player) {
-				player.balance += winnings;
+				// Return original bet plus winnings for winning bets
+				const winningBets = betResults.filter(
+					(br) => br.bet.playerId === playerId && br.isWinner,
+				);
+				const originalBetsToReturn = winningBets.reduce(
+					(sum, br) => sum + br.bet.amount,
+					0,
+				);
+				player.balance += winnings + originalBetsToReturn;
 			}
 		}
 
@@ -316,7 +301,7 @@ export class RouletteGame {
 	}
 
 	private getNumberColor(num: number): "red" | "black" | "green" {
-		if (num === 0 || (this.wheel.isAmerican && num === 37)) {
+		if (num === 0 || (this.wheel.isAmerican && num === -1)) {
 			return "green";
 		}
 		return this.redNumbers.includes(num) ? "red" : "black";
@@ -340,58 +325,88 @@ export class RouletteGame {
 	private isBetWinner(bet: RouletteBet, winningNumber: number): boolean {
 		switch (bet.type) {
 			case BetType.STRAIGHT_UP:
-				return bet.numbers![0] === winningNumber;
+			case BetType.ROULETTE_STRAIGHT_UP:
+				return bet.numbers?.[0] === winningNumber;
 
 			case BetType.SPLIT:
-				return bet.numbers!.includes(winningNumber);
+			case BetType.ROULETTE_SPLIT:
+				return bet.numbers?.includes(winningNumber) ?? false;
 
 			case BetType.STREET:
-				return bet.numbers!.includes(winningNumber);
+			case BetType.ROULETTE_STREET:
+				return bet.numbers?.includes(winningNumber) ?? false;
 
 			case BetType.CORNER:
-				return bet.numbers!.includes(winningNumber);
+			case BetType.ROULETTE_CORNER:
+				return bet.numbers?.includes(winningNumber) ?? false;
 
 			case BetType.RED:
-				return winningNumber !== 0 && this.redNumbers.includes(winningNumber);
+			case BetType.ROULETTE_RED:
+				return (
+					winningNumber !== 0 &&
+					winningNumber !== -1 &&
+					this.redNumbers.includes(winningNumber)
+				);
 
 			case BetType.BLACK:
-				return winningNumber !== 0 && this.blackNumbers.includes(winningNumber);
+			case BetType.ROULETTE_BLACK:
+				return (
+					winningNumber !== 0 &&
+					winningNumber !== -1 &&
+					this.blackNumbers.includes(winningNumber)
+				);
 
 			case BetType.ODD:
-				return winningNumber !== 0 && winningNumber % 2 === 1;
+			case BetType.ROULETTE_ODD:
+				return (
+					winningNumber !== 0 && winningNumber !== -1 && winningNumber % 2 === 1
+				);
 
 			case BetType.EVEN:
-				return winningNumber !== 0 && winningNumber % 2 === 0;
+			case BetType.ROULETTE_EVEN:
+				return (
+					winningNumber !== 0 && winningNumber !== -1 && winningNumber % 2 === 0
+				);
 
 			case BetType.HIGH:
+			case BetType.ROULETTE_HIGH:
 				return winningNumber >= 19 && winningNumber <= 36;
 
 			case BetType.LOW:
+			case BetType.ROULETTE_LOW:
 				return winningNumber >= 1 && winningNumber <= 18;
 
 			case BetType.DOZEN_FIRST:
+			case BetType.ROULETTE_FIRST_DOZEN:
 				return winningNumber >= 1 && winningNumber <= 12;
 
 			case BetType.DOZEN_SECOND:
+			case BetType.ROULETTE_SECOND_DOZEN:
 				return winningNumber >= 13 && winningNumber <= 24;
 
 			case BetType.DOZEN_THIRD:
+			case BetType.ROULETTE_THIRD_DOZEN:
 				return winningNumber >= 25 && winningNumber <= 36;
 
 			case BetType.COLUMN_FIRST:
+			case BetType.ROULETTE_FIRST_COLUMN:
 				return winningNumber > 0 && winningNumber % 3 === 1;
 
 			case BetType.COLUMN_SECOND:
+			case BetType.ROULETTE_SECOND_COLUMN:
 				return winningNumber > 0 && winningNumber % 3 === 2;
 
 			case BetType.COLUMN_THIRD:
+			case BetType.ROULETTE_THIRD_COLUMN:
 				return winningNumber > 0 && winningNumber % 3 === 0;
 
 			case BetType.ZERO:
+			case BetType.ROULETTE_ZERO:
 				return winningNumber === 0;
 
 			case BetType.DOUBLE_ZERO:
-				return this.wheel.isAmerican && winningNumber === 37; // 00 represented as 37
+			case BetType.ROULETTE_DOUBLE_ZERO:
+				return this.wheel.isAmerican && winningNumber === -1; // Double zero represented as -1
 
 			default:
 				return false;
@@ -421,7 +436,7 @@ export class RouletteGame {
 		};
 
 		const ratio = payoutRatios[bet.type] || 0;
-		return bet.amount + bet.amount * ratio; // Return original bet + winnings
+		return bet.amount * ratio; // Return only the winnings, not original bet
 	}
 
 	private getBetNumbers(bet: RouletteBet): number[] {
@@ -476,7 +491,7 @@ export class RouletteGame {
 				return [0];
 
 			case BetType.DOUBLE_ZERO:
-				return [37]; // 00 represented as 37
+				return [-1]; // 00 represented as -1
 
 			default:
 				return [];

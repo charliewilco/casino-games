@@ -394,7 +394,11 @@ class MultiGameCasino {
 		playerId: string,
 		gameType: "blackjack" | "roulette" | "poker",
 		wagered: number,
-		results: any,
+		results: {
+			netWinnings?: number;
+			handsWon?: number;
+			[key: string]: unknown;
+		},
 	): void {
 		const player = this.players.get(playerId);
 		if (!player) return;
@@ -464,7 +468,7 @@ class MultiGameCasino {
 	}
 
 	// Utility methods
-	private formatCards(cards: any[]): string {
+	private formatCards(cards: Array<{ text: string; suit: string }>): string {
 		return cards.map((card) => `${card.text}${card.suit}`).join(" ");
 	}
 
@@ -491,7 +495,19 @@ class MultiGameCasino {
 		return this.players.get(playerId) || null;
 	}
 
-	getCasinoSummary(): any {
+	getCasinoSummary(): {
+		totalPlayers: number;
+		activeTables: number;
+		totalRevenue: number;
+		avgBetSize: number;
+		topPlayers: Array<{
+			id: string;
+			name: string;
+			totalWagered: number;
+			netWinnings: number;
+		}>;
+		vipDistribution: { [level: string]: number };
+	} {
 		const totalPlayers = this.players.size;
 		const activeTables = Array.from(this.tables.values()).filter(
 			(t) => t.isActive,
@@ -533,9 +549,9 @@ class MultiGameCasino {
 		console.log(`Total Games: ${summary.totalGames}`);
 
 		console.log("\nVIP Distribution:");
-		Object.entries(summary.vipDistribution).forEach(([level, count]) => {
+		for (const [level, count] of Object.entries(summary.vipDistribution)) {
 			console.log(`  ${level}: ${count} players`);
-		});
+		}
 
 		console.log("\nTop Players by Total Wagered:");
 		const topPlayers = Array.from(this.players.values())

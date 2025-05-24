@@ -1,6 +1,6 @@
-import { PokerHandEvaluator } from "../../src/poker-evaluator";
-import { HandRank } from "../../src/types";
-import { type PlayingCard, CardValue, CardSuite } from "../../src/playing-card";
+import { PokerHandEvaluator } from "../src/poker-evaluator";
+import { HandRank } from "../src/types";
+import { type PlayingCard, CardValue, CardSuite } from "../src/playing-card";
 
 describe("PokerHandEvaluator", () => {
 	// Helper function to create cards
@@ -16,7 +16,7 @@ describe("PokerHandEvaluator", () => {
 						? 12
 						: value === CardValue.JACK
 							? 11
-							: parseInt(value as string),
+							: Number.parseInt(value as string),
 	});
 
 	describe("Hand Ranking Detection", () => {

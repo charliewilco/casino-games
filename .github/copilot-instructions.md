@@ -1,0 +1,5 @@
+- use `pnpm`
+- use hard tabs
+- ideally this project is meant to be used in React project
+- assume shuffling functions will be supplied by the consuming application
+- do not add dependencies

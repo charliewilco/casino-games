@@ -150,7 +150,14 @@ class BlackjackTournament {
 		}
 	}
 
-	private updatePlayerStats(results: any): void {
+	private updatePlayerStats(
+		results: Array<{
+			playerId: string;
+			result: string;
+			bet: number;
+			payout: number;
+		}>,
+	): void {
 		for (const [playerId, player] of this.players) {
 			const gamePlayer = this.game.getPlayer(playerId);
 			if (gamePlayer) {
@@ -177,7 +184,7 @@ class BlackjackTournament {
 		}
 	}
 
-	private formatHand(hand: any[]): string {
+	private formatHand(hand: Array<{ text: string; suit: string }>): string {
 		return hand.map((card) => `${card.text}${card.suit}`).join(", ");
 	}
 

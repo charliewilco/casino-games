@@ -143,12 +143,16 @@ class PokerTournament {
 						this.game.call(playerId);
 						break;
 					case "bet":
-						this.game.bet(playerId, action.amount!);
-						player.totalBet += action.amount!;
+						if (action.amount !== undefined) {
+							this.game.bet(playerId, action.amount);
+							player.totalBet += action.amount;
+						}
 						break;
 					case "raise":
-						this.game.raise(playerId, action.amount!);
-						player.totalBet += action.amount!;
+						if (action.amount !== undefined) {
+							this.game.raise(playerId, action.amount);
+							player.totalBet += action.amount;
+						}
 						break;
 					case "all-in":
 						this.game.allIn(playerId);
@@ -203,9 +207,9 @@ class PokerTournament {
 	}
 
 	private assessHandStrength(
-		holeCards: any[],
-		communityCards: any[],
-		evaluation: any,
+		holeCards: Array<{ value: number; suit: string }>,
+		communityCards: Array<{ value: number; suit: string }>,
+		evaluation: { rank: number; description: string } | null,
 	): number {
 		// Simple hand strength assessment (0-1 scale)
 		if (evaluation) {
@@ -230,30 +234,30 @@ class PokerTournament {
 				default:
 					return 0.3; // High Card
 			}
-		} else {
-			// Pre-flop evaluation based on hole cards
-			if (holeCards.length === 2) {
-				const [card1, card2] = holeCards;
+		}
 
-				// Pocket pairs
-				if (card1.value === card2.value) {
-					if (card1.value >= 11) return 0.9; // JJ, QQ, KK, AA
-					if (card1.value >= 8) return 0.75; // 88, 99, TT
-					return 0.6; // Low pairs
-				}
+		// Pre-flop evaluation based on hole cards
+		if (holeCards.length === 2) {
+			const [card1, card2] = holeCards;
 
-				// Suited cards
-				if (card1.suit === card2.suit) {
-					if (card1.value >= 11 || card2.value >= 11) return 0.7; // High suited
-					return 0.55; // Medium suited
-				}
-
-				// Offsuit high cards
-				if (card1.value >= 11 && card2.value >= 11) return 0.65; // High offsuit
-				if (card1.value >= 10 || card2.value >= 10) return 0.5; // Medium high
-
-				return 0.3; // Low cards
+			// Pocket pairs
+			if (card1.value === card2.value) {
+				if (card1.value >= 11) return 0.9; // JJ, QQ, KK, AA
+				if (card1.value >= 8) return 0.75; // 88, 99, TT
+				return 0.6; // Low pairs
 			}
+
+			// Suited cards
+			if (card1.suit === card2.suit) {
+				if (card1.value >= 11 || card2.value >= 11) return 0.7; // High suited
+				return 0.55; // Medium suited
+			}
+
+			// Offsuit high cards
+			if (card1.value >= 11 && card2.value >= 11) return 0.65; // High offsuit
+			if (card1.value >= 10 || card2.value >= 10) return 0.5; // Medium high
+
+			return 0.3; // Low cards
 		}
 
 		return 0.3;
@@ -394,7 +398,7 @@ class PokerTournament {
 		}
 	}
 
-	private formatCards(cards: any[]): string {
+	private formatCards(cards: Array<{ text: string; suit: string }>): string {
 		return cards.map((card) => `${card.text}${card.suit}`).join(" ");
 	}
 

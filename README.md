@@ -45,7 +45,7 @@ A comprehensive TypeScript library for implementing casino games with advanced f
 ## Installation
 
 ```bash
-npm install @charliewilco/casino-games
+pnpm install @charliewilco/casino-games
 ```
 
 ## Quick Start
@@ -287,14 +287,12 @@ The `examples/` directory contains comprehensive demonstrations of the casino en
 ### Running Examples
 
 ```bash
-# Install tsx for running TypeScript directly
-npm install -g tsx
 
 # Run individual examples
-npx tsx examples/blackjack-tournament.ts
-npx tsx examples/roulette-simulation.ts
-npx tsx examples/poker-tournament.ts
-npx tsx examples/multi-game-casino.ts
+pnpm dlx tsx examples/blackjack-tournament.ts
+pnpm dlx tsx examples/roulette-simulation.ts
+pnpm dlx tsx examples/poker-tournament.ts
+pnpm dlx tsx examples/multi-game-casino.ts
 ```
 
 See `examples/README.md` for detailed documentation and customization options.
@@ -303,16 +301,16 @@ See `examples/README.md` for detailed documentation and customization options.
 
 ```bash
 # Install dependencies
-npm install
+pnpm install
 
 # Run tests
-npm test
+pnpm test
 
 # Build the project
-npm run build
+pnpm build
 
 # Lint and format
-npx biome check --write .
+pnpm biome check --write .
 ```
 
 ## License

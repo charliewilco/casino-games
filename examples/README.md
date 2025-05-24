@@ -57,15 +57,7 @@ A full Texas Hold'em tournament with:
 
 ## Running the Examples
 
-### Prerequisites
 
-```bash
-# Install dependencies
-npm install
-
-# Build the project
-npm run build
-```
 
 ### Running Individual Examples
 
@@ -73,13 +65,13 @@ Each example can be run by uncommenting the example function call at the bottom 
 
 ```bash
 # Run blackjack tournament
-npx tsx examples/blackjack-tournament.ts
+pnpm dlx tsx examples/blackjack-tournament.ts
 
 # Run roulette simulation  
-npx tsx examples/roulette-simulation.ts
+pnpm dlx tsx examples/roulette-simulation.ts
 
 # Run poker tournament
-npx tsx examples/poker-tournament.ts
+pnpm dlx tsx examples/poker-tournament.ts
 ```
 
 ### Integration Examples

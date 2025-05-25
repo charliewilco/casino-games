@@ -313,6 +313,20 @@ pnpm build
 pnpm biome check --write .
 ```
 
+### Using with GitHub Codespaces
+
+This repository includes a devcontainer configuration for use with GitHub Codespaces or local development with VS Code and Docker:
+
+1. Open the repository in GitHub Codespaces directly from GitHub
+2. Or use VS Code with the Dev Containers extension to open the repository locally
+
+The development container includes:
+- Node.js 22
+- pnpm 10.6.1
+- Required VS Code extensions for TypeScript, Biome, and testing
+
+When the container starts, it will automatically install dependencies using `pnpm install`.
+
 ## License
 
 ISC

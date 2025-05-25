@@ -34,5 +34,8 @@
 	},
 	"pnpm": {
 		"onlyBuiltDependencies": ["@biomejs/biome"]
+	},
+	"publishConfig": {
+		"registry": "https://npm.pkg.github.com/"
 	}
 }

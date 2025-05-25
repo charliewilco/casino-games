@@ -38,6 +38,6 @@
 		"onlyBuiltDependencies": ["@biomejs/biome"]
 	},
 	"publishConfig": {
-		"registry": "https://npm.pkg.github.com/"
+		"@charliewilco:registry": "https://npm.pkg.github.com/"
 	}
 }

@@ -1,4 +1,6 @@
-# Casino Games Engine
+# Casino Games Engine 🎰
+
+[![CI](https://github.com/charliewilco/casino-games/actions/workflows/ci.yml/badge.svg)](https://github.com/charliewilco/casino-games/actions/workflows/ci.yml)
 
 A comprehensive TypeScript library for implementing casino games with advanced features including multi-player support, sophisticated betting systems, and complete game mechanics.
 

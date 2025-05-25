@@ -11,11 +11,9 @@
 	"customizations": {
 		"vscode": {
 			"extensions": [
-				"dbaeumer.vscode-eslint",
-				"esbenp.prettier-vscode",
 				"ms-vscode.vscode-typescript-next",
 				"biomejs.biome",
-				"ZixuanChen.vitest-explorer"
+				"orta.vscode-jest"
 			],
 			"settings": {
 				"editor.formatOnSave": true,

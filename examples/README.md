@@ -185,4 +185,4 @@ The examples are designed to be extensible. You can add:
 
 ## License
 
-These examples are provided under the same ISC license as the main package.
+These examples are provided under the same BSD-3-Clause license as the main package.

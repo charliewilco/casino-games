@@ -210,13 +210,19 @@ if (comparison > 0) {
 ### Roulette
 
 ```ts
-import { RouletteGame } from '@charliewilco/casino-games';
+import { RouletteGame, BetType } from '@charliewilco/casino-games';
 
 const roulette = new RouletteGame();
-roulette.placeBet({ type: "red", amount: 100 });
+roulette.addPlayer({ id: "player1", balance: 1000 });
+roulette.placeBet("player1", { 
+  type: BetType.RED,
+  amount: 100,
+  playerId: "player1"
+});
 
-const winningNumber = roulette.spinWheel();
-const payout = roulette.getPayout({ type: "red", amount: 100 });
+const result = roulette.spin();
+console.log(`Winning number: ${result.winningNumber}`);
+console.log(`Total winnings: ${result.totalWinnings.player1 || 0}`);
 ```
 
 ### Texas Hold'em Poker
@@ -224,17 +230,26 @@ const payout = roulette.getPayout({ type: "red", amount: 100 });
 ```ts
 import { TexasPokerGame } from '@charliewilco/casino-games';
 
-const poker = new TexasPokerGame();
+const poker = new TexasPokerGame({
+  smallBlind: 5,
+  bigBlind: 10,
+  maxPlayers: 9
+});
+
 poker.addPlayer("player1", "Alice", 1000);
 poker.addPlayer("player2", "Bob", 1000);
 
-poker.startNewGame();
-poker.flop(); // Deal 3 community cards
-poker.turn(); // Deal 1 community card
-poker.river(); // Deal final community card
+poker.startNewHand();
+console.log(`Current phase: ${poker.getCurrentPhase()}`); // "preflop"
 
-poker.bet("player1", 100);
-poker.fold("player2");
+// Betting actions
+poker.call("player1");  
+poker.raise("player2", 30);
+poker.call("player1");
+
+// Game progresses automatically through betting rounds
+// Check community cards
+const communityCards = poker.getCommunityCards();
 ```
 
 ## API Reference
@@ -250,30 +265,55 @@ poker.fold("player2");
 
 ### BlackjackGame
 
-- `startNewRound()`: Start a new round with fresh hands
-- `hit()`: Player draws a card
-- `dealerPlay()`: Dealer plays according to rules
-- `getPlayerHandValue()`: Get player's hand value
+- `addPlayer(player)`: Add a player to the game
+- `removePlayer(playerId)`: Remove a player from the game
+- `placeBet(playerId, amount, betType)`: Place a bet
+- `startRound()`: Start a new round with fresh hands
+- `hit(playerId)`: Player draws a card
+- `stand(playerId)`: Player stands with current hand
+- `doubleDown(playerId)`: Player doubles down on their bet
+- `split(playerId)`: Player splits a pair into two hands
+- `surrender(playerId)`: Player surrenders and loses half their bet
+- `getPlayerHands(playerId)`: Get a player's current hands
+- `getDealerCards()`: Get the dealer's current cards
+- `getPlayerHandValue(playerId, handIndex)`: Get a player's hand value
 - `getDealerHandValue()`: Get dealer's hand value
-- `isPlayerBusted()`: Check if player is busted
-- `getWinner()`: Determine the winner
+- `getGameStatistics()`: Get game statistics
 
 ### RouletteGame
 
+- `addPlayer(player)`: Add a player to the game
 - `placeBet(bet)`: Place a bet on the table
-- `spinWheel()`: Spin the wheel and get winning number
-- `checkWin(bet)`: Check if a bet wins
-- `getPayout(bet)`: Calculate payout for a bet
+- `spin()`: Spin the wheel and get results
+- `getPlayerBalance(playerId)`: Get a player's current balance
+- `updatePlayerBalance(playerId, newBalance)`: Directly update a player's balance
+- `getTableLimits()`: Get the current table betting limits
+- `getActiveBets()`: Get all active bets on the table
 
 ### TexasPokerGame
 
 - `addPlayer(id, name, chips)`: Add a player to the game
-- `startNewGame()`: Start a new poker game
-- `flop()`: Deal the flop (3 community cards)
-- `turn()`: Deal the turn (1 community card)
-- `river()`: Deal the river (1 community card)
+- `removePlayer(playerId)`: Remove a player from the game
+- `startNewHand()`: Start a new hand
 - `bet(playerId, amount)`: Player places a bet
+- `call(playerId)`: Player calls the current bet
+- `raise(playerId, amount)`: Player raises the current bet
+- `check(playerId)`: Player checks
 - `fold(playerId)`: Player folds
+- `allIn(playerId)`: Player goes all-in
+- `getHandHistory()`: Get actions taken in the current hand
+- `getPotInfo()`: Get main pot and side pot information
+- `getCommunityCards()`: Get the community cards
+- `getCurrentPhase()`: Get the current game phase
+- `getShowdownResult()`: Get the showdown result
+
+### PokerHandEvaluator
+
+- `evaluateHand(cards)`: Evaluate a poker hand
+- `compareHands(hand1, hand2)`: Compare two poker hands for ranking
+- `getHandRankDescription(rank)`: Get description of a hand rank
+
+> **Note**: Some legacy methods exist in the codebase marked with `@deprecated` tags. These are maintained for backward compatibility but newer methods should be preferred.
 
 ## Examples
 
@@ -329,4 +369,4 @@ When the container starts, it will automatically install dependencies using `pnp
 
 ## License
 
-ISC
+BSD-3-Clause

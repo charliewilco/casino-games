@@ -1,8 +1,8 @@
 import {
 	BetType,
-	type RouletteBet,
-	InvalidBetError,
 	InsufficientFundsError,
+	InvalidBetError,
+	type RouletteBet,
 } from "../types.ts";
 
 /**

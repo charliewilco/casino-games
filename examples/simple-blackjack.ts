@@ -4,7 +4,7 @@
  * This example demonstrates basic blackjack gameplay with one player.
  */
 
-import { BlackjackGame, BetType } from "../src/index.mts";
+import { BetType, BlackjackGame } from "../src/index.mts";
 
 function runSimpleBlackjack() {
 	console.log("🃏 Simple Blackjack Demo");

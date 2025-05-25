@@ -1,12 +1,12 @@
-import { describe, test, expect } from "@jest/globals";
-import { PokerHandEvaluator } from "../src/poker-evaluator.ts";
-import { HandRank } from "../src/types.ts";
+import { describe, expect, test } from "@jest/globals";
 import {
-	type PlayingCard,
-	CardValue,
 	CardSuite,
 	CardText,
+	CardValue,
+	type PlayingCard,
 } from "../src/playing-card.ts";
+import { PokerHandEvaluator } from "../src/poker-evaluator.ts";
+import { HandRank } from "../src/types.ts";
 
 describe("PokerHandEvaluator", () => {
 	const valueToText: Record<CardValue, CardText> = {

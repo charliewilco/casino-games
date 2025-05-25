@@ -1,4 +1,4 @@
-import { describe, expect, test, beforeEach } from "@jest/globals";
+import { beforeEach, describe, expect, test } from "@jest/globals";
 import { RouletteGame } from "../../src/games/roulette-game.ts";
 import { BetType } from "../../src/types.ts";
 

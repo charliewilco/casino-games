@@ -5,7 +5,7 @@
  * various betting strategies, and realistic casino simulation.
  */
 
-import { RouletteGame, BetType } from "../src/index.mts";
+import { BetType, RouletteGame } from "../src/index.mts";
 
 interface CasinoPlayer {
 	id: string;

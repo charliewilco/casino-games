@@ -5,7 +5,7 @@
  * realistic betting strategies, and comprehensive hand evaluation.
  */
 
-import { TexasPokerGame, PokerHandEvaluator } from "../src/index.mts";
+import { PokerHandEvaluator, TexasPokerGame } from "../src/index.mts";
 import type { PlayingCard } from "../src/playing-card.ts";
 
 interface TournamentPlayer {

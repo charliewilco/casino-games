@@ -5,8 +5,8 @@
  * with advanced features like splitting, doubling down, and insurance.
  */
 
-import { BlackjackGame, BetType } from "../src/index.mts";
 import type { GameResult } from "../src/games/blackjack-game.ts";
+import { BetType, BlackjackGame } from "../src/index.mts";
 
 interface TournamentPlayer {
 	id: string;

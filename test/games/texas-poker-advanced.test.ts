@@ -1,4 +1,4 @@
-import { describe, test, beforeEach } from "@jest/globals";
+import { beforeEach, describe, test } from "@jest/globals";
 import { TexasPokerGame } from "../../src/games/texas-poker-game.ts";
 
 describe("TexasPokerGame - Advanced Features", () => {

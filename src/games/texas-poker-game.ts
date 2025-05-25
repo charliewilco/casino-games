@@ -3,9 +3,9 @@ import type { PlayingCard } from "../playing-card.ts";
 import { PokerHandEvaluator } from "../poker-evaluator.ts";
 import {
 	GameStateError,
-	InvalidBetError,
-	InsufficientFundsError,
 	type HandEvaluation,
+	InsufficientFundsError,
+	InvalidBetError,
 	type PokerShowdown,
 } from "../types.ts";
 

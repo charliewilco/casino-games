@@ -1,10 +1,10 @@
 import { DeckShoe } from "../deck.ts";
 import type { PlayingCard } from "../playing-card.ts";
 import {
-	InvalidBetError,
+	BetType,
 	GameStateError,
 	InsufficientFundsError,
-	BetType,
+	InvalidBetError,
 } from "../types.ts";
 
 /**

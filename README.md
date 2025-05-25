@@ -52,7 +52,7 @@ pnpm install @charliewilco/casino-games
 
 ### Basic Deck Usage
 
-```typescript
+```ts
 import { Deck, DeckShoe } from '@charliewilco/casino-games';
 
 // Single deck
@@ -67,7 +67,7 @@ const dealtCards = shoe.draw(10);
 
 ### Enhanced Blackjack with Multi-Player
 
-```typescript
+```ts
 import { BlackjackGame, BetType } from '@charliewilco/casino-games';
 
 const game = new BlackjackGame();
@@ -103,7 +103,7 @@ console.log(`Hands played: ${stats.handsPlayed}`);
 
 ### Comprehensive Roulette
 
-```typescript
+```ts
 import { RouletteGame, BetType } from '@charliewilco/casino-games';
 
 const game = new RouletteGame(false, { // European wheel
@@ -139,7 +139,7 @@ console.log(`Total winnings for player1: ${result.totalWinnings.player1 || 0}`);
 
 ### Advanced Texas Hold'em
 
-```typescript
+```ts
 import { TexasPokerGame } from '@charliewilco/casino-games';
 
 const game = new TexasPokerGame({
@@ -182,7 +182,7 @@ if (game.getCurrentPhase() === "showdown") {
 
 ### Poker Hand Evaluation
 
-```typescript
+```ts
 import { PokerHandEvaluator, createStandardDeck } from '@charliewilco/casino-games';
 
 const deck = createStandardDeck();
@@ -209,7 +209,7 @@ if (comparison > 0) {
 
 ### Roulette
 
-```typescript
+```ts
 import { RouletteGame } from '@charliewilco/casino-games';
 
 const roulette = new RouletteGame();
@@ -221,7 +221,7 @@ const payout = roulette.getPayout({ type: "red", amount: 100 });
 
 ### Texas Hold'em Poker
 
-```typescript
+```ts
 import { TexasPokerGame } from '@charliewilco/casino-games';
 
 const poker = new TexasPokerGame();
@@ -282,17 +282,17 @@ The `examples/` directory contains comprehensive demonstrations of the casino en
 - **🃏 Blackjack Tournament** (`examples/blackjack-tournament.ts`) - Multi-player tournament with AI strategies
 - **🎰 Roulette Simulation** (`examples/roulette-simulation.ts`) - Casino simulation with multiple betting strategies  
 - **🎲 Poker Tournament** (`examples/poker-tournament.ts`) - Texas Hold'em tournament with realistic gameplay
-- **🏛️ Multi-Game Casino** (`examples/multi-game-casino.ts`) - Integrated platform combining all games
+
 
 ### Running Examples
 
 ```bash
-
 # Run individual examples
 pnpm dlx tsx examples/blackjack-tournament.ts
 pnpm dlx tsx examples/roulette-simulation.ts
 pnpm dlx tsx examples/poker-tournament.ts
-pnpm dlx tsx examples/multi-game-casino.ts
+pnpm dlx tsx examples/test-implementation.ts
+pnpm dlx tsx examples/simple-blackjack.ts
 ```
 
 See `examples/README.md` for detailed documentation and customization options.

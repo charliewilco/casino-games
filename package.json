@@ -12,11 +12,11 @@
 		"import": "./dist/index.js"
 	},
 	"scripts": {
-		"build": "tsdown",
-		"lint": "biome lint",
-		"format": "biome format --write",
-		"test": "jest --verbose",
-		"example": "node ./demo.js"
+		"build": "tsdown --config config/tsdown.config.ts",
+		"lint": "biome lint --config-path ./config/biome.json",
+		"format": "biome format --write --config-path ./config/biome.json",
+		"test": "jest --verbose --silent --config=./config/jest.config.cjs",
+		"example": "tsx ./examples/test-implementation.ts"
 	},
 	"keywords": [],
 	"author": "",

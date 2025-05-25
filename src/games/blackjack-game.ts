@@ -7,46 +7,100 @@ import {
 	BetType,
 } from "../types.ts";
 
+/**
+ * Represents a player in a blackjack game.
+ */
 export interface BlackjackPlayer {
+	/** Unique identifier for the player */
 	id: string;
+	/** Player's current balance in the game */
 	balance: number;
+	/** Optional display name for the player */
 	name?: string;
 }
 
+/**
+ * Represents a single hand in a blackjack game.
+ * Each player can have multiple hands if they split.
+ */
 export interface BlackjackHand {
+	/** The cards currently in this hand */
 	cards: PlayingCard[];
+	/** The amount bet on this hand */
 	bet: number;
+	/** Whether this hand has been doubled down */
 	isDoubledDown: boolean;
+	/** Whether the player has chosen to stand on this hand */
 	isStanding: boolean;
+	/** Whether this hand is eligible for splitting */
 	canSplit: boolean;
+	/** Whether this hand is eligible for doubling down */
 	canDoubleDown: boolean;
+	/** Whether this hand is eligible for surrender */
 	canSurrender: boolean;
+	/** Whether this hand is a blackjack (21 with 2 cards) */
 	isBlackjack: boolean;
+	/** Whether this hand has busted (exceeded 21) */
 	isBusted: boolean;
+	/** Whether this hand has been surrendered */
 	isSurrendered: boolean;
 }
 
+/**
+ * Configuration options for customizing blackjack game rules.
+ */
 export interface BlackjackOptions {
+	/** Whether players can double down on their hands */
 	allowDoubleDown: boolean;
+	/** Whether players can split pairs */
 	allowSplit: boolean;
+	/** Whether players can surrender their hands */
 	allowSurrender: boolean;
+	/** Whether insurance bets are allowed when dealer shows an Ace */
 	allowInsurance: boolean;
+	/** Whether dealer hits on soft 17 (Ace + 6) */
 	dealerHitsSoft17: boolean;
+	/** Maximum number of hands a player can have after splitting */
 	maxSplitHands: number;
+	/** Payout multiplier for blackjack (1.5 for 3:2, 1.2 for 6:5) */
 	blackjackPayout: number; // 1.5 for 3:2, 1.2 for 6:5
+	/** Minimum bet amount allowed */
 	minBet: number;
+	/** Maximum bet amount allowed */
 	maxBet: number;
 }
 
+/**
+ * Represents the result of a completed blackjack hand.
+ */
 export interface GameResult {
+	/** ID of the player this result belongs to */
 	playerId: string;
+	/** Index of the hand (relevant for split hands) */
 	handIndex: number;
+	/** Outcome of the hand */
 	result: "win" | "lose" | "push" | "blackjack" | "surrender";
+	/** Amount paid out to the player (0 for losses) */
 	payout: number;
+	/** Final value of the player's hand */
 	playerValue: number;
+	/** Final value of the dealer's hand */
 	dealerValue: number;
 }
 
+/**
+ * A comprehensive blackjack game implementation supporting multiple players,
+ * splitting, doubling down, surrender, insurance, and various game rules.
+ *
+ * @example
+ * ```typescript
+ * const game = new BlackjackGame(6, { allowSurrender: true });
+ * game.addPlayer({ id: "player1", balance: 1000 });
+ * game.startBettingPhase();
+ * game.placeBet("player1", 100);
+ * game.startRound();
+ * ```
+ */
 export class BlackjackGame {
 	private shoe: DeckShoe;
 	private dealer: { cards: PlayingCard[]; isBlackjack: boolean };
@@ -61,6 +115,12 @@ export class BlackjackGame {
 		new Map();
 	private gameStats = { handsPlayed: 0, totalBetAmount: 0 };
 
+	/**
+	 * Creates a new blackjack game instance.
+	 *
+	 * @param decks - Number of decks to use in the shoe (default: 8)
+	 * @param options - Custom game options to override defaults
+	 */
 	constructor(decks = 8, options: Partial<BlackjackOptions> = {}) {
 		this.shoe = new DeckShoe(decks);
 		this.dealer = { cards: [], isBlackjack: false };
@@ -81,6 +141,12 @@ export class BlackjackGame {
 	}
 
 	// Player management
+	/**
+	 * Adds a new player to the game.
+	 *
+	 * @param player - The player to add
+	 * @throws {GameStateError} If a player with the same ID already exists
+	 */
 	public addPlayer(player: BlackjackPlayer): void {
 		if (this.players.has(player.id)) {
 			throw new GameStateError(`Player ${player.id} already exists`);
@@ -89,6 +155,12 @@ export class BlackjackGame {
 		this.playerHands.set(player.id, []);
 	}
 
+	/**
+	 * Removes a player from the game.
+	 *
+	 * @param playerId - ID of the player to remove
+	 * @throws {GameStateError} If trying to remove the current player during an active game
+	 */
 	public removePlayer(playerId: string): void {
 		if (this.gameInProgress && this.currentPlayer === playerId) {
 			throw new GameStateError("Cannot remove current player during game");
@@ -97,14 +169,30 @@ export class BlackjackGame {
 		this.playerHands.delete(playerId);
 	}
 
+	/**
+	 * Retrieves a player by their ID.
+	 *
+	 * @param playerId - ID of the player to retrieve
+	 * @returns The player object or undefined if not found
+	 */
 	public getPlayer(playerId: string): BlackjackPlayer | undefined {
 		return this.players.get(playerId);
 	}
 
+	/**
+	 * Gets all players currently in the game.
+	 *
+	 * @returns Array of all players
+	 */
 	public getPlayers(): BlackjackPlayer[] {
 		return Array.from(this.players.values());
 	}
 
+	/**
+	 * Gets all current active bets in the game.
+	 *
+	 * @returns Array of bet information including player ID, amount, and type
+	 */
 	public getCurrentBets(): Array<{
 		playerId: string;
 		amount: number;
@@ -120,11 +208,21 @@ export class BlackjackGame {
 		return allBets;
 	}
 
+	/**
+	 * Gets game statistics including hands played and total bet amounts.
+	 *
+	 * @returns Object containing game statistics
+	 */
 	public getGameStatistics(): { handsPlayed: number; totalBetAmount: number } {
 		return { ...this.gameStats };
 	}
 
 	// Betting phase
+	/**
+	 * Starts the betting phase of the game, resetting hands and bets.
+	 *
+	 * @throws {GameStateError} If a game is already in progress
+	 */
 	public startBettingPhase(): void {
 		if (this.gameInProgress) {
 			throw new GameStateError("Game already in progress");
@@ -139,7 +237,24 @@ export class BlackjackGame {
 		this.activeBets.clear();
 	}
 
+	/**
+	 * Places a bet for a player.
+	 *
+	 * @param playerId - ID of the player placing the bet
+	 * @param amount - Amount to bet
+	 * @overload
+	 */
 	public placeBet(playerId: string, amount: number): void;
+	/**
+	 * Places a bet for a player with a specific bet type.
+	 *
+	 * @param playerId - ID of the player placing the bet
+	 * @param amount - Amount to bet
+	 * @param betType - Type of bet (main, insurance, etc.)
+	 * @throws {InvalidBetError} If player not found or bet amount invalid
+	 * @throws {InsufficientFundsError} If player lacks sufficient balance
+	 * @throws {GameStateError} If betting is not allowed at this time
+	 */
 	public placeBet(playerId: string, amount: number, betType: BetType): void;
 	public placeBet(
 		playerId: string,
@@ -240,6 +355,11 @@ export class BlackjackGame {
 		}
 	}
 
+	/**
+	 * Starts a new round after the betting phase, dealing initial cards.
+	 *
+	 * @throws {GameStateError} If not in betting phase or no players have placed bets
+	 */
 	public startRound(): void {
 		if (!this.bettingPhase) {
 			throw new GameStateError(
@@ -277,6 +397,12 @@ export class BlackjackGame {
 	}
 
 	// Legacy compatibility methods
+	/**
+	 * Starts a new round with default settings for backwards compatibility.
+	 * Creates a default player and hand if none exist.
+	 *
+	 * @deprecated Use startBettingPhase(), placeBet(), and startRound() instead
+	 */
 	public startNewRound(): void {
 		// For backwards compatibility - create a simple game for testing
 		this.dealer.cards = [];
@@ -310,36 +436,74 @@ export class BlackjackGame {
 		this.currentPlayer = "player1";
 	}
 
+	/**
+	 * Gets the default player's hand cards for legacy compatibility.
+	 *
+	 * @returns Array of cards in the default player's hand
+	 * @deprecated Use getPlayerHandMulti() instead
+	 */
 	public getPlayerHand(): PlayingCard[] {
 		const hands = this.playerHands.get("player1");
 		return hands?.[0]?.cards || [];
 	}
 
+	/**
+	 * Gets the dealer's current hand cards.
+	 *
+	 * @returns Array of cards in the dealer's hand
+	 */
 	public getDealerHand(): PlayingCard[] {
 		return this.dealer.cards;
 	}
 
+	/**
+	 * Executes dealer play according to standard blackjack rules.
+	 * Dealer hits until reaching 17 or higher (soft 17 rule applies).
+	 */
 	public dealerPlay(): void {
 		while (this.shouldDealerHit()) {
 			this.dealer.cards.push(this.shoe.draw(1)[0]);
 		}
 	}
 
+	/**
+	 * Gets the default player's hand value for legacy compatibility.
+	 *
+	 * @returns Numerical value of the default player's hand
+	 * @deprecated Use getPlayerHandValueMulti() instead
+	 */
 	public getPlayerHandValue(): number {
 		const hands = this.playerHands.get("player1");
 		const hand = hands?.[0]?.cards || [];
 		return this.getHandValuePrivate(hand);
 	}
 
+	/**
+	 * Gets the dealer's current hand value.
+	 *
+	 * @returns Numerical value of the dealer's hand
+	 */
 	public getDealerHandValue(): number {
 		return this.getHandValuePrivate(this.dealer.cards);
 	}
 
+	/**
+	 * Checks if the default player has busted for legacy compatibility.
+	 *
+	 * @returns True if the default player's hand value exceeds 21
+	 * @deprecated Use isPlayerBustedMulti() instead
+	 */
 	public isPlayerBusted(): boolean {
 		const hands = this.playerHands.get("player1");
 		return hands?.[0]?.isBusted || false;
 	}
 
+	/**
+	 * Determines the winner between the default player and dealer for legacy compatibility.
+	 *
+	 * @returns "player", "dealer", "tie", or null if no active hand
+	 * @deprecated Use getWinnerMulti() instead
+	 */
 	public getWinner(): "player" | "dealer" | "tie" | null {
 		const hands = this.playerHands.get("player1");
 		const hand = hands?.[0];
@@ -356,21 +520,49 @@ export class BlackjackGame {
 	}
 
 	// Multi-player versions
+	/**
+	 * Gets a specific player's hand cards.
+	 *
+	 * @param playerId - ID of the player
+	 * @param handIndex - Index of the hand (for split hands, default: 0)
+	 * @returns Array of cards in the specified hand
+	 */
 	public getPlayerHandMulti(playerId: string, handIndex = 0): PlayingCard[] {
 		const hands = this.playerHands.get(playerId);
 		return hands?.[handIndex]?.cards || [];
 	}
 
+	/**
+	 * Gets the value of a specific player's hand.
+	 *
+	 * @param playerId - ID of the player
+	 * @param handIndex - Index of the hand (for split hands, default: 0)
+	 * @returns Numerical value of the specified hand
+	 */
 	public getPlayerHandValueMulti(playerId: string, handIndex = 0): number {
 		const hand = this.getPlayerHandMulti(playerId, handIndex);
 		return this.getHandValuePrivate(hand);
 	}
 
+	/**
+	 * Checks if a specific player's hand has busted.
+	 *
+	 * @param playerId - ID of the player
+	 * @param handIndex - Index of the hand (for split hands, default: 0)
+	 * @returns True if the specified hand value exceeds 21
+	 */
 	public isPlayerBustedMulti(playerId: string, handIndex = 0): boolean {
 		const hands = this.playerHands.get(playerId);
 		return hands?.[handIndex]?.isBusted || false;
 	}
 
+	/**
+	 * Determines the winner between a specific player's hand and the dealer.
+	 *
+	 * @param playerId - ID of the player
+	 * @param handIndex - Index of the hand (for split hands, default: 0)
+	 * @returns "player", "dealer", "tie", or null if no active hand
+	 */
 	public getWinnerMulti(
 		playerId: string,
 		handIndex = 0,
@@ -390,7 +582,21 @@ export class BlackjackGame {
 	}
 
 	// Multi-player action methods with legacy compatibility
+	/**
+	 * Deals one card to the default player's hand for legacy compatibility.
+	 *
+	 * @returns The card that was dealt
+	 * @overload
+	 */
 	public hit(): PlayingCard;
+	/**
+	 * Deals one card to a specific player's hand.
+	 *
+	 * @param playerId - ID of the player
+	 * @param handIndex - Index of the hand (for split hands)
+	 * @returns The card that was dealt
+	 * @throws {GameStateError} If no active round or invalid hand
+	 */
 	public hit(playerId: string, handIndex?: number): PlayingCard;
 	public hit(playerId?: string, handIndex = 0): PlayingCard {
 		// Legacy compatibility - if no playerId provided, use "player1"
@@ -447,7 +653,19 @@ export class BlackjackGame {
 		return card;
 	}
 
+	/**
+	 * Makes the default player stand for legacy compatibility.
+	 *
+	 * @overload
+	 */
 	public stand(): void;
+	/**
+	 * Makes a specific player stand on their hand.
+	 *
+	 * @param playerId - ID of the player
+	 * @param handIndex - Index of the hand (for split hands)
+	 * @throws {GameStateError} If no active round or player already stood
+	 */
 	public stand(playerId: string, handIndex?: number): void;
 	public stand(playerId?: string, handIndex = 0): void {
 		// Legacy compatibility - if no playerId provided, use "player1"
@@ -497,6 +715,15 @@ export class BlackjackGame {
 		hand.canSurrender = false;
 	}
 
+	/**
+	 * Doubles down on a player's hand, doubling the bet and dealing exactly one more card.
+	 *
+	 * @param playerId - ID of the player
+	 * @param handIndex - Index of the hand (for split hands, default: 0)
+	 * @returns The card that was dealt
+	 * @throws {GameStateError} If no active round, invalid hand, or double down not allowed
+	 * @throws {InsufficientFundsError} If player lacks sufficient funds
+	 */
 	public doubleDown(playerId: string, handIndex = 0): PlayingCard {
 		if (!this.gameInProgress) {
 			throw new GameStateError("No active round");
@@ -551,6 +778,14 @@ export class BlackjackGame {
 		return card;
 	}
 
+	/**
+	 * Splits a player's hand into two separate hands when they have a pair.
+	 *
+	 * @param playerId - ID of the player
+	 * @param handIndex - Index of the hand to split (default: 0)
+	 * @throws {GameStateError} If no active round, invalid hand, split not allowed, or max hands reached
+	 * @throws {InsufficientFundsError} If player lacks sufficient funds
+	 */
 	public split(playerId: string, handIndex = 0): void {
 		if (!this.gameInProgress) {
 			throw new GameStateError("No active round");
@@ -612,6 +847,13 @@ export class BlackjackGame {
 		player.balance -= hand.bet;
 	}
 
+	/**
+	 * Allows a player to surrender their hand, getting back half their bet.
+	 *
+	 * @param playerId - ID of the player
+	 * @param handIndex - Index of the hand to surrender (default: 0)
+	 * @throws {GameStateError} If no active round, invalid hand, or surrender not allowed
+	 */
 	public surrender(playerId: string, handIndex = 0): void {
 		if (!this.gameInProgress) {
 			throw new GameStateError("No active round");
@@ -640,6 +882,12 @@ export class BlackjackGame {
 		hand.canSurrender = false;
 	}
 
+	/**
+	 * Finishes the current round, processes all results, and pays out winnings.
+	 *
+	 * @returns Array of game results for each player's hand
+	 * @throws {GameStateError} If no active round
+	 */
 	public finishRound(): GameResult[] {
 		if (!this.gameInProgress) {
 			throw new GameStateError("No active round");
@@ -711,7 +959,21 @@ export class BlackjackGame {
 	}
 
 	// Public method for legacy compatibility
+	/**
+	 * Gets the hand value for the default player for legacy compatibility.
+	 *
+	 * @returns Numerical value of the default player's hand
+	 * @overload
+	 */
 	public getHandValue(): number;
+	/**
+	 * Gets the hand value for a specific player.
+	 *
+	 * @param playerId - ID of the player
+	 * @param handIndex - Index of the hand (for split hands)
+	 * @returns Numerical value of the specified hand
+	 * @throws {GameStateError} If no active hand found
+	 */
 	public getHandValue(playerId: string, handIndex?: number): number;
 	public getHandValue(playerId?: string, handIndex = 0): number {
 		// Legacy compatibility - if no playerId provided, use "player1"
@@ -733,6 +995,12 @@ export class BlackjackGame {
 	}
 
 	// Helper methods for blackjack logic
+	/**
+	 * Updates the state flags of a hand based on current cards and game options.
+	 *
+	 * @param hand - The hand to update
+	 * @private
+	 */
 	private updateHandState(hand: BlackjackHand): void {
 		const handValue = this.getHandValuePrivate(hand.cards);
 
@@ -764,6 +1032,14 @@ export class BlackjackGame {
 			!hand.isBlackjack;
 	}
 
+	/**
+	 * Calculates the optimal value of a hand of cards according to blackjack rules.
+	 * Aces are counted as 11 unless that would cause a bust, then as 1.
+	 *
+	 * @param cards - Array of cards to calculate value for
+	 * @returns The optimal numerical value of the hand
+	 * @private
+	 */
 	private getHandValuePrivate(cards: PlayingCard[]): number {
 		let value = 0;
 		let aces = 0;
@@ -791,10 +1067,25 @@ export class BlackjackGame {
 		return value;
 	}
 
+	/**
+	 * Determines if a hand is a blackjack (21 with exactly 2 cards).
+	 *
+	 * @param cards - Array of cards to check
+	 * @returns True if the hand is a blackjack
+	 * @private
+	 */
 	private isBlackjack(cards: PlayingCard[]): boolean {
 		return cards.length === 2 && this.getHandValuePrivate(cards) === 21;
 	}
 
+	/**
+	 * Determines if the dealer should hit based on standard blackjack rules.
+	 * Dealer hits on 16 or less, stands on 17 or more.
+	 * Respects the soft 17 rule if configured.
+	 *
+	 * @returns True if dealer should take another card
+	 * @private
+	 */
 	private shouldDealerHit(): boolean {
 		const dealerValue = this.getHandValuePrivate(this.dealer.cards);
 

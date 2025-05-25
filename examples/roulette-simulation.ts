@@ -116,7 +116,6 @@ class RouletteSimulation {
 				type: BetType.ROULETTE_RED,
 				amount: betAmount,
 				numbers: [],
-				playerId,
 			});
 
 			// Sometimes bet on even too
@@ -125,7 +124,6 @@ class RouletteSimulation {
 					type: BetType.ROULETTE_EVEN,
 					amount: betAmount,
 					numbers: [],
-					playerId,
 				});
 				player.totalWagered += betAmount * 2;
 				player.betsPlaced += 2;
@@ -149,7 +147,6 @@ class RouletteSimulation {
 				type: BetType.ROULETTE_STRAIGHT_UP,
 				amount: Math.min(baseAmount, 50),
 				numbers: [luckyNumber],
-				playerId,
 			});
 
 			// Corner bet
@@ -157,7 +154,6 @@ class RouletteSimulation {
 				type: BetType.ROULETTE_CORNER,
 				amount: baseAmount,
 				numbers: [1, 2, 4, 5], // Corner covering 1,2,4,5
-				playerId,
 			});
 
 			player.totalWagered += baseAmount * 2;
@@ -179,7 +175,6 @@ class RouletteSimulation {
 				type: BetType.ROULETTE_BLACK,
 				amount: betAmount,
 				numbers: [],
-				playerId,
 			});
 
 			player.totalWagered += betAmount;
@@ -211,7 +206,6 @@ class RouletteSimulation {
 				type: randomBetType,
 				amount: betAmount,
 				numbers: [],
-				playerId,
 			});
 
 			player.totalWagered += betAmount;
@@ -384,4 +378,4 @@ async function runExample() {
 // Uncomment to run the example
 // runExample().catch(console.error);
 
-export { RouletteSimulation };
+await runExample();

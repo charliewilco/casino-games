@@ -1,5 +1,5 @@
-import type { PlayingCard } from "./playing-card";
-import { HandRank, type HandEvaluation } from "./types";
+import type { PlayingCard } from "./playing-card.ts";
+import { HandRank, type HandEvaluation } from "./types.ts";
 
 // biome-ignore lint/complexity/noStaticOnlyClass: This class provides a cohesive API for poker hand evaluation and is used externally
 export class PokerHandEvaluator {

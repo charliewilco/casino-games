@@ -1,15 +1,15 @@
 // Main exports for the casino games package
-export { Deck, DeckShoe } from "./deck";
+export { Deck, DeckShoe } from "./deck.ts";
 export {
 	type PlayingCard,
 	CardValue,
 	CardText,
 	CardSuite,
 	createStandardDeck,
-} from "./playing-card";
+} from "./playing-card.ts";
 
 // Game engines
-export { BlackjackGame } from "./games/blackjack-game";
+export { BlackjackGame } from "./games/blackjack-game.ts";
 export {
 	RouletteGame,
 	type Bet,
@@ -17,7 +17,7 @@ export {
 	type RoulettePlayer,
 	type RouletteBetResult,
 	type RouletteSpinResult,
-} from "./games/roulette-game";
+} from "./games/roulette-game.ts";
 export {
 	TexasPokerGame,
 	type PokerPlayer,
@@ -25,10 +25,10 @@ export {
 	type BettingRound,
 	type PotInfo,
 	type ShowdownResult,
-} from "./games/texas-poker-game";
+} from "./games/texas-poker-game.ts";
 
 // Poker hand evaluation
-export { PokerHandEvaluator } from "./poker-evaluator";
+export { PokerHandEvaluator } from "./poker-evaluator.ts";
 
 // Core types and interfaces
 export {
@@ -56,4 +56,4 @@ export {
 	type PokerShowdown,
 	// Game statistics
 	type GameStatistics,
-} from "./types";
+} from "./types.ts";

@@ -1,13 +1,13 @@
-import { Deck } from "../deck";
-import type { PlayingCard } from "../playing-card";
-import { PokerHandEvaluator } from "../poker-evaluator";
+import { Deck } from "../deck.ts";
+import type { PlayingCard } from "../playing-card.ts";
+import { PokerHandEvaluator } from "../poker-evaluator.ts";
 import {
 	GameStateError,
 	InvalidBetError,
 	InsufficientFundsError,
 	type HandEvaluation,
 	type PokerShowdown,
-} from "../types";
+} from "../types.ts";
 
 export interface PokerPlayer {
 	id: string;
@@ -712,7 +712,7 @@ export class TexasPokerGame {
 		return this.players.filter((p) => !p.folded && p.chips >= 0);
 	}
 
-	private getCallAmount(playerId: string): number {
+	public getCallAmount(playerId: string): number {
 		const player = this.findPlayer(playerId);
 		return Math.max(0, this.currentBet - player.currentBet);
 	}

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "@jest/globals";
-import { RouletteGame } from "../../src/games/roulette-game";
-import { BetType } from "../../src/types";
+import { RouletteGame } from "../../src/games/roulette-game.ts";
+import { BetType } from "../../src/types.ts";
 
 describe("Roulette", () => {
 	test("should create a roulette table with default settings", () => {

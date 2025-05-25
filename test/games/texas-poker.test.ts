@@ -1,5 +1,5 @@
 import { describe, expect, test } from "@jest/globals";
-import { TexasPokerGame } from "../../src/games/texas-poker-game";
+import { TexasPokerGame } from "../../src/games/texas-poker-game.ts";
 
 describe("TexasPokerGame", () => {
 	test("should create a new poker game", () => {

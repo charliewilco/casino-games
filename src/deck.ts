@@ -1,5 +1,5 @@
-import type { PlayingCard } from "./playing-card";
-import { createStandardDeck } from "./playing-card";
+import { createStandardDeck } from "./playing-card.ts";
+import type { PlayingCard } from "./playing-card.ts";
 
 export type ShuffleFn<T> = (input: T[], seed?: number) => T[];
 

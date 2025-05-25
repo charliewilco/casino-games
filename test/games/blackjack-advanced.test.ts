@@ -1,5 +1,6 @@
-import { BlackjackGame } from "../../src/games/blackjack-game";
-import { BetType } from "../../src/types";
+import { describe, test, expect, beforeEach } from "@jest/globals";
+import { BetType } from "../../src/types.ts";
+import { BlackjackGame } from "../../src/games/blackjack-game.ts";
 
 describe("BlackjackGame - Advanced Features", () => {
 	let game: BlackjackGame;
@@ -39,8 +40,8 @@ describe("BlackjackGame - Advanced Features", () => {
 		});
 
 		test("should place main bets", () => {
-			game.placeBet("player1", 100, BetType.BLACKJACK_MAIN);
-			game.placeBet("player2", 50, BetType.BLACKJACK_MAIN);
+			game.placeBet("player1", 100);
+			game.placeBet("player2", 50);
 
 			const bets = game.getCurrentBets();
 			expect(bets).toHaveLength(2);
@@ -51,36 +52,36 @@ describe("BlackjackGame - Advanced Features", () => {
 		test("should validate bet amounts", () => {
 			// Test minimum bet
 			expect(() => {
-				game.placeBet("player1", 0.5, BetType.BLACKJACK_MAIN);
+				game.placeBet("player1", 0.5);
 			}).toThrow("Bet amount must be between");
 
 			// Test maximum bet
 			expect(() => {
-				game.placeBet("player1", 5000, BetType.BLACKJACK_MAIN);
+				game.placeBet("player1", 5000);
 			}).toThrow("Bet amount must be between");
 
 			// Test insufficient funds
 			expect(() => {
-				game.placeBet("player2", 600, BetType.BLACKJACK_MAIN);
+				game.placeBet("player2", 600);
 			}).toThrow("Insufficient funds");
 		});
 
 		test("should handle side bets", () => {
-			game.placeBet("player1", 50, BetType.BLACKJACK_MAIN);
-			game.placeBet("player1", 10, BetType.BLACKJACK_INSURANCE);
+			game.placeBet("player1", 50);
+			game.placeBet("player1", 10);
 
 			const bets = game.getCurrentBets();
 			expect(bets).toHaveLength(2);
-			expect(
-				bets.find((bet) => bet.type === BetType.BLACKJACK_INSURANCE)?.amount,
-			).toBe(10);
+			expect(bets.find((bet) => bet.type === BetType.INSURANCE)?.amount).toBe(
+				10,
+			);
 		});
 	});
 
 	describe("Double Down", () => {
 		beforeEach(() => {
 			game.addPlayer({ id: "player1", balance: 1000 });
-			game.placeBet("player1", 100, BetType.BLACKJACK_MAIN);
+			game.placeBet("player1", 100);
 		});
 
 		test("should allow double down on initial two cards", () => {
@@ -110,7 +111,7 @@ describe("BlackjackGame - Advanced Features", () => {
 	describe("Split Hands", () => {
 		beforeEach(() => {
 			game.addPlayer({ id: "player1", balance: 1000 });
-			game.placeBet("player1", 100, BetType.BLACKJACK_MAIN);
+			game.placeBet("player1", 100);
 		});
 
 		test("should handle split when possible", () => {
@@ -121,9 +122,9 @@ describe("BlackjackGame - Advanced Features", () => {
 			try {
 				game.split("player1");
 				// If split succeeds, check that there are now two hands
-				const gameState = game.getGameState();
+				// const gameState = game.getGameState();
 				// Implementation would need to expose split hands
-			} catch (error) {
+			} catch (error: any) {
 				// Expected if no pairs in hand
 				expect(error.message).toContain("Cannot split");
 			}
@@ -170,12 +171,12 @@ describe("BlackjackGame - Advanced Features", () => {
 			// Note: Insurance is only available when dealer shows Ace
 			// Since we can't control the deck in this test, we test the general case
 			try {
-				game.placeBet("player1", 50, BetType.BLACKJACK_INSURANCE);
+				game.placeBet("player1", 50, BetType.INSURANCE);
 				const bets = game.getCurrentBets();
 				expect(
-					bets.find((bet) => bet.type === BetType.BLACKJACK_INSURANCE),
+					bets.find((bet) => bet.type === BetType.INSURANCE),
 				).toBeDefined();
-			} catch (error) {
+			} catch (error: any) {
 				// Expected if dealer doesn't show Ace
 				expect(error.message).toContain("Insurance");
 			}

@@ -1,5 +1,5 @@
-import type { PlayingCard } from "./playing-card";
-import { HandRank, type HandEvaluation } from "./types";
+import type { PlayingCard } from "./playing-card.ts";
+import { HandRank, type HandEvaluation } from "./types.ts";
 
 // biome-ignore lint/complexity/noStaticOnlyClass: This class provides a cohesive API for poker hand evaluation and is used externally
 export class PokerHandEvaluator {
@@ -74,13 +74,6 @@ export class PokerHandEvaluator {
 				PokerHandEvaluator.RANK_VALUES[a.rank],
 		);
 
-		// Check for flush
-		const isFlush = PokerHandEvaluator.isFlush(sortedCards);
-
-		// Check for straight
-		const straightInfo = PokerHandEvaluator.isStraight(sortedCards);
-		const isStraight = straightInfo.isStraight;
-
 		// Count ranks
 		const rankCounts = PokerHandEvaluator.getRankCounts(sortedCards);
 		const counts = Object.values(rankCounts).sort((a, b) => b - a);
@@ -94,24 +87,8 @@ export class PokerHandEvaluator {
 		// Helper to get cards by rank
 		const getCardsByRank = (rank: string, count: number) =>
 			sortedCards.filter((c) => c.rank === rank).slice(0, count);
-		// Helper to get cards by suit
-		const getFlushCards = () => {
-			const suitCounts: { [suit: string]: PlayingCard[] } = {};
-			for (const c of sortedCards) {
-				suitCounts[c.suit] = suitCounts[c.suit] || [];
-				suitCounts[c.suit].push(c);
-			}
-			return (
-				Object.values(suitCounts)
-					.find((arr) => arr.length >= 5)
-					?.slice(0, 5) || []
-			);
-		};
 		// Helper to get straight cards
 		const getStraightCards = () => {
-			const values = sortedCards.map(
-				(c) => PokerHandEvaluator.RANK_VALUES[c.rank],
-			);
 			let straight: PlayingCard[] = [];
 			for (let i = 0; i < sortedCards.length; i++) {
 				straight = [sortedCards[i]];
@@ -130,8 +107,9 @@ export class PokerHandEvaluator {
 				if (straight.length === 5) return straight;
 			}
 			// Special case: wheel straight (A-2-3-4-5)
-			const ranks = sortedCards.map((c) => c.rank);
-			if (["A", "2", "3", "4", "5"].every((r) => ranks.includes(r))) {
+			const cardRanks: string[] = sortedCards.map((c) => c.rank);
+			const wheelRanks: string[] = ["A", "2", "3", "4", "5"];
+			if (wheelRanks.every((r) => cardRanks.includes(r))) {
 				const wheel = ["5", "4", "3", "2", "A"]
 					.map((r) => sortedCards.find((c) => c.rank === r))
 					.filter(Boolean) as PlayingCard[];
@@ -151,35 +129,64 @@ export class PokerHandEvaluator {
 		// --- FIX: Use helpers for correct cards/kickers ---
 		// Determine hand type and value
 		// --- FIX: Robust straight flush/royal flush detection for 5+ suited cards (always run before flush/straight) ---
+		let bestFlush: PlayingCard[] | null = null;
+		let foundStraightFlush: HandEvaluation | null = null;
 		for (const suit in suitGroups) {
 			const suited = suitGroups[suit];
 			if (suited.length >= 5) {
 				const combos = PokerHandEvaluator.getCombinations(suited, 5);
 				for (const combo of combos) {
-					const straightInfo = PokerHandEvaluator.isStraight(combo);
+					// Remove duplicate ranks in the combo (shouldn't happen, but just in case)
+					const uniqueCombo = combo.filter(
+						(card, idx, arr) =>
+							arr.findIndex((c) => c.rank === card.rank) === idx,
+					);
+					if (uniqueCombo.length < 5) continue;
+					const sortedCombo = [...uniqueCombo].sort(
+						(a, b) =>
+							PokerHandEvaluator.RANK_VALUES[b.rank] -
+							PokerHandEvaluator.RANK_VALUES[a.rank],
+					);
+					const straightInfo = PokerHandEvaluator.isStraight(sortedCombo);
 					if (straightInfo.isStraight) {
 						const highCard = straightInfo.highCard;
-						if (highCard === 14 && combo.some((c) => c.rank === "10")) {
+						if (highCard === 14 && sortedCombo.some((c) => c.rank === "10")) {
 							return {
 								rank: HandRank.ROYAL_FLUSH,
 								value: HandRank.ROYAL_FLUSH * 1000000 + highCard,
 								description: "Royal Flush",
-								cards: combo,
+								cards: sortedCombo,
 								kickers: [],
 							};
 						}
 						return {
 							rank: HandRank.STRAIGHT_FLUSH,
 							value: HandRank.STRAIGHT_FLUSH * 1000000 + highCard,
-							description: `Straight Flush, ${PokerHandEvaluator.RANK_NAMES[combo[0].rank]} high`,
-							cards: combo,
+							description: `Straight Flush, ${PokerHandEvaluator.RANK_NAMES[sortedCombo[0].rank]} high`,
+							cards: sortedCombo,
 							kickers: [],
 						};
 					}
 				}
+				// Track best flush for later (always top 5 highest cards of the suit)
+				const topFlush = [...suited]
+					.sort(
+						(a, b) =>
+							PokerHandEvaluator.RANK_VALUES[b.rank] -
+							PokerHandEvaluator.RANK_VALUES[a.rank],
+					)
+					.slice(0, 5);
+				if (
+					!bestFlush ||
+					PokerHandEvaluator.RANK_VALUES[topFlush[0].rank] >
+						PokerHandEvaluator.RANK_VALUES[bestFlush[0].rank]
+				) {
+					bestFlush = topFlush;
+				}
 			}
 		}
 		// --- END FIX ---
+
 		// Check for quads, full house, trips, two pair, one pair, high card using all cards
 		if (counts[0] === 4) {
 			const quadRank = ranks[0];
@@ -275,26 +282,21 @@ export class PokerHandEvaluator {
 				kickers: handCards.slice(2),
 			};
 		}
-		// Now, after all other hand types, check for flush or straight
-		for (const suit in suitGroups) {
-			const suited = suitGroups[suit];
-			if (suited.length >= 5) {
-				const flushCards = suited.slice(0, 5);
-				const values = flushCards.map(
-					(c) => PokerHandEvaluator.RANK_VALUES[c.rank],
-				);
-				let value = HandRank.FLUSH * 1000000;
-				for (let i = 0; i < values.length; i++) {
-					value += values[i] * 100 ** (4 - i);
-				}
-				return {
-					rank: HandRank.FLUSH,
-					value,
-					description: `Flush, ${PokerHandEvaluator.RANK_NAMES[flushCards[0].rank]} high`,
-					cards: flushCards,
-					kickers: flushCards.slice(1),
-				};
+
+		// Only check for flush if no higher hand was found
+		if (bestFlush) {
+			let value = HandRank.FLUSH * 1000000;
+			for (let i = 0; i < bestFlush.length; i++) {
+				value +=
+					PokerHandEvaluator.RANK_VALUES[bestFlush[i].rank] * 100 ** (4 - i);
 			}
+			return {
+				rank: HandRank.FLUSH,
+				value,
+				description: `Flush, ${PokerHandEvaluator.RANK_NAMES[bestFlush[0].rank]} high`,
+				cards: bestFlush,
+				kickers: bestFlush.slice(1),
+			};
 		}
 		const straightCards = getStraightCards();
 		if (straightCards.length === 5) {
@@ -323,11 +325,6 @@ export class PokerHandEvaluator {
 			kickers: handCards.slice(1),
 		};
 		// --- END FIX ---
-	}
-
-	private static isFlush(cards: PlayingCard[]): boolean {
-		const suit = cards[0].suit;
-		return cards.every((card) => card.suit === suit);
 	}
 
 	private static isStraight(cards: PlayingCard[]): {

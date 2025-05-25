@@ -16,6 +16,7 @@
 		"test": "jest --verbose --silent --config=./config/jest.config.cjs",
 		"example": "tsx ./examples/test-implementation.ts",
 		"prepublish": "biome format --write",
+		"postversion": "biome format --write",
 		"postinstall": "lefthook install"
 	},
 	"keywords": [],

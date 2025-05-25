@@ -6,6 +6,7 @@
  */
 
 import { TexasPokerGame, PokerHandEvaluator } from "../src/index.mts";
+import type { PlayingCard } from "../src/playing-card.ts";
 
 interface TournamentPlayer {
 	id: string;
@@ -59,7 +60,7 @@ class PokerTournament {
 		};
 
 		this.players.set(id, player);
-		this.game.addPlayer({ id, name, chips, position });
+		this.game.addPlayer(id, name, chips);
 	}
 
 	async playHand(): Promise<void> {
@@ -91,7 +92,7 @@ class PokerTournament {
 			// Update player statistics
 			this.updatePlayerStats();
 		} catch (error) {
-			console.log(`Hand ${this.handNumber} error:`, error.message);
+			console.log(`Hand ${this.handNumber} error:`, (error as Error).message);
 		}
 	}
 
@@ -99,7 +100,7 @@ class PokerTournament {
 		const phases = ["preflop", "flop", "turn", "river"];
 
 		for (const phase of phases) {
-			if (this.game.getCurrentPhase() !== phase) continue;
+			if (this.game.getGamePhase() !== phase) continue;
 
 			console.log(`\n--- ${phase.toUpperCase()} ---`);
 
@@ -163,7 +164,7 @@ class PokerTournament {
 				// Short delay for readability
 				await new Promise((resolve) => setTimeout(resolve, 100));
 			} catch (error) {
-				console.log(`${player.name} action error:`, error.message);
+				console.log(`${player.name} action error:`, (error as Error).message);
 			}
 		}
 	}
@@ -172,10 +173,13 @@ class PokerTournament {
 		playerId: string,
 		player: TournamentPlayer,
 	): { action: string; amount?: number } {
+		const playIndex = this.game
+			.getPlayers()
+			.findIndex((p) => p.id === playerId);
 		// Simple AI decision making based on play style
-		const holeCards = this.game.getPlayerHoleCards(playerId);
+		const holeCards = this.game.getPlayers()[playIndex].hand;
 		const communityCards = this.game.getCommunityCards();
-		const phase = this.game.getCurrentPhase();
+		const phase = this.game.getGamePhase();
 
 		// Evaluate hand strength
 		const allCards = [...holeCards, ...communityCards];
@@ -183,7 +187,6 @@ class PokerTournament {
 			allCards.length >= 5 ? PokerHandEvaluator.evaluateHand(allCards) : null;
 
 		// Get current pot and betting info
-		const potInfo = this.game.getPotInfo();
 		const currentBet = this.getCurrentBet();
 		const callAmount = Math.max(
 			0,
@@ -201,7 +204,7 @@ class PokerTournament {
 			player,
 			handStrength,
 			callAmount,
-			potInfo.mainPot,
+			this.game.getPotTotal(),
 			phase,
 		);
 	}
@@ -352,30 +355,31 @@ class PokerTournament {
 
 	private showHandResults(): void {
 		try {
-			if (this.game.getCurrentPhase() === "showdown") {
-				const result = this.game.getShowdownResult();
+			if (this.game.getGamePhase() === "showdown") {
+				const result = this.game.showdown();
 				if (result) {
 					console.log("\n🏆 SHOWDOWN RESULTS 🏆");
 					result.winners.forEach((winner, index) => {
+						const evaluation = PokerHandEvaluator.evaluateHand(winner.hand);
 						console.log(
-							`${index + 1}. ${winner.player.name}: ${winner.evaluation.description}`,
+							`${index + 1}. ${winner.name}: ${evaluation.description}`,
 						);
-						console.log(
-							`   Cards: ${this.formatCards(winner.evaluation.cards)}`,
-						);
+						console.log(`   Cards: ${this.formatCards(winner.hand)}`);
 					});
-					console.log(`💰 Pot: $${result.potAmount}`);
+					console.log(`💰 Pot: $${result.potWon}`);
 				}
 			}
 		} catch (error) {
-			console.log("Error showing results:", error.message);
+			console.log("Error showing results:", (error as Error).message);
 		}
 	}
 
 	private updatePlayerStats(): void {
 		for (const [playerId, player] of this.players) {
 			try {
-				const gamePlayer = this.game.getPlayer(playerId);
+				const gamePlayer = this.game
+					.getPlayers()
+					.find((p) => p.id === playerId);
 				if (gamePlayer) {
 					const chipChange = gamePlayer.chips - player.chips;
 					player.chips = gamePlayer.chips;
@@ -393,13 +397,16 @@ class PokerTournament {
 					}
 				}
 			} catch (error) {
-				console.log(`Error updating stats for ${player.name}:`, error.message);
+				console.log(
+					`Error updating stats for ${player.name}:`,
+					(error as Error).message,
+				);
 			}
 		}
 	}
 
-	private formatCards(cards: Array<{ text: string; suit: string }>): string {
-		return cards.map((card) => `${card.text}${card.suit}`).join(" ");
+	private formatCards(cards: PlayingCard[]): string {
+		return cards.map((card) => `${card.rank}${card.suit}`).join(" ");
 	}
 
 	showTournamentResults(): void {
@@ -483,5 +490,4 @@ async function runExample() {
 
 // Uncomment to run the example
 // runExample().catch(console.error);
-
-export { PokerTournament };
+await runExample();

@@ -1,0 +1,35 @@
+{
+	"name": "Casino Games Development",
+	"build": {
+		"dockerfile": "Dockerfile"
+	},
+	"features": {
+		"ghcr.io/devcontainers/features/node:1": {
+			"version": "22"
+		}
+	},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"dbaeumer.vscode-eslint",
+				"esbenp.prettier-vscode",
+				"ms-vscode.vscode-typescript-next",
+				"biomejs.biome",
+				"ZixuanChen.vitest-explorer"
+			],
+			"settings": {
+				"editor.formatOnSave": true,
+				"editor.defaultFormatter": "biomejs.biome",
+				"editor.codeActionsOnSave": {
+					"source.fixAll.biome": true
+				},
+				"typescript.tsdk": "node_modules/typescript/lib",
+				"typescript.enablePromptUseWorkspaceTsdk": true,
+				"typescript.experimental.useTsgo": true
+			}
+		}
+	},
+	"postCreateCommand": "pnpm install",
+	"waitFor": "postCreateCommand",
+	"remoteUser": "node"
+}

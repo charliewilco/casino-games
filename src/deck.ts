@@ -37,7 +37,7 @@ const defaultShuffleFn: ShuffleFn<PlayingCard> = (deck, seed) => {
 export class Deck {
 	private cards: PlayingCard[];
 	private drawnCards: PlayingCard[];
-	private shuffleFn: ShuffleFn<PlayingCard>;
+	public shuffleFn: ShuffleFn<PlayingCard>;
 	private seed?: number;
 
 	constructor(

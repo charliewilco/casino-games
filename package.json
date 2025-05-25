@@ -16,7 +16,7 @@
 		"lint": "biome lint",
 		"format": "biome format --write",
 		"test": "jest --verbose",
-		"example": "node ./demo.js"
+		"example": "tsx ./examples/test-implementation.ts"
 	},
 	"keywords": [],
 	"author": "",

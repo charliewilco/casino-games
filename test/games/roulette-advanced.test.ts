@@ -1,5 +1,6 @@
-import { RouletteGame } from "../../src/games/roulette-game";
-import { BetType } from "../../src/types";
+import { describe, expect, test, beforeEach } from "@jest/globals";
+import { RouletteGame } from "../../src/games/roulette-game.ts";
+import { BetType } from "../../src/types.ts";
 
 describe("RouletteGame - Comprehensive Betting", () => {
 	let game: RouletteGame;
@@ -45,7 +46,6 @@ describe("RouletteGame - Comprehensive Betting", () => {
 				type: BetType.ROULETTE_STRAIGHT_UP,
 				amount: 50,
 				numbers: [7],
-				playerId: "player1",
 			});
 
 			const bets = game.getActiveBets();
@@ -59,7 +59,6 @@ describe("RouletteGame - Comprehensive Betting", () => {
 				type: BetType.ROULETTE_SPLIT,
 				amount: 30,
 				numbers: [1, 2],
-				playerId: "player1",
 			});
 
 			const bets = game.getActiveBets();
@@ -72,7 +71,6 @@ describe("RouletteGame - Comprehensive Betting", () => {
 				type: BetType.ROULETTE_STREET,
 				amount: 40,
 				numbers: [1, 2, 3],
-				playerId: "player1",
 			});
 
 			const bets = game.getActiveBets();
@@ -85,7 +83,6 @@ describe("RouletteGame - Comprehensive Betting", () => {
 				type: BetType.ROULETTE_CORNER,
 				amount: 25,
 				numbers: [1, 2, 4, 5],
-				playerId: "player1",
 			});
 
 			const bets = game.getActiveBets();
@@ -104,7 +101,6 @@ describe("RouletteGame - Comprehensive Betting", () => {
 				type: BetType.ROULETTE_RED,
 				amount: 100,
 				numbers: [],
-				playerId: "player1",
 			});
 
 			const bets = game.getActiveBets();
@@ -116,7 +112,6 @@ describe("RouletteGame - Comprehensive Betting", () => {
 				type: BetType.ROULETTE_ODD,
 				amount: 75,
 				numbers: [],
-				playerId: "player1",
 			});
 
 			const bets = game.getActiveBets();
@@ -128,7 +123,6 @@ describe("RouletteGame - Comprehensive Betting", () => {
 				type: BetType.ROULETTE_HIGH,
 				amount: 50,
 				numbers: [],
-				playerId: "player1",
 			});
 
 			const bets = game.getActiveBets();
@@ -140,7 +134,6 @@ describe("RouletteGame - Comprehensive Betting", () => {
 				type: BetType.ROULETTE_FIRST_DOZEN,
 				amount: 60,
 				numbers: [],
-				playerId: "player1",
 			});
 
 			const bets = game.getActiveBets();
@@ -152,7 +145,6 @@ describe("RouletteGame - Comprehensive Betting", () => {
 				type: BetType.ROULETTE_FIRST_COLUMN,
 				amount: 80,
 				numbers: [],
-				playerId: "player1",
 			});
 
 			const bets = game.getActiveBets();
@@ -172,9 +164,8 @@ describe("RouletteGame - Comprehensive Betting", () => {
 					type: BetType.ROULETTE_STRAIGHT_UP,
 					amount: 150, // Over maxStraightUp of 100
 					numbers: [7],
-					playerId: "player1",
 				});
-			}).toThrow("exceeds table limit");
+			}).toThrow("Bet cannot exceed table limit of 100");
 
 			// Test split limit
 			expect(() => {
@@ -182,9 +173,8 @@ describe("RouletteGame - Comprehensive Betting", () => {
 					type: BetType.ROULETTE_SPLIT,
 					amount: 250, // Over maxSplit of 200
 					numbers: [1, 2],
-					playerId: "player1",
 				});
-			}).toThrow("exceeds table limit");
+			}).toThrow("Bet cannot exceed table limit of 200");
 		});
 
 		test("should validate bet amounts", () => {
@@ -193,7 +183,6 @@ describe("RouletteGame - Comprehensive Betting", () => {
 					type: BetType.ROULETTE_STRAIGHT_UP,
 					amount: 0.5, // Under minimum
 					numbers: [7],
-					playerId: "player1",
 				});
 			}).toThrow("below minimum bet");
 
@@ -202,7 +191,6 @@ describe("RouletteGame - Comprehensive Betting", () => {
 					type: BetType.ROULETTE_RED,
 					amount: 1500, // Over player balance
 					numbers: [],
-					playerId: "player1",
 				});
 			}).toThrow("Insufficient funds");
 		});
@@ -213,7 +201,6 @@ describe("RouletteGame - Comprehensive Betting", () => {
 					type: BetType.ROULETTE_STRAIGHT_UP,
 					amount: 50,
 					numbers: [37], // Invalid number
-					playerId: "player1",
 				});
 			}).toThrow("Invalid bet numbers");
 
@@ -222,7 +209,6 @@ describe("RouletteGame - Comprehensive Betting", () => {
 					type: BetType.ROULETTE_SPLIT,
 					amount: 50,
 					numbers: [1], // Split needs 2 numbers
-					playerId: "player1",
 				});
 			}).toThrow("Invalid bet numbers");
 		});
@@ -240,7 +226,6 @@ describe("RouletteGame - Comprehensive Betting", () => {
 				type: BetType.ROULETTE_STRAIGHT_UP,
 				amount: 10,
 				numbers: [7],
-				playerId: "player1",
 			});
 
 			const result = game.spin();
@@ -258,7 +243,6 @@ describe("RouletteGame - Comprehensive Betting", () => {
 				type: BetType.ROULETTE_SPLIT,
 				amount: 20,
 				numbers: [1, 2],
-				playerId: "player1",
 			});
 
 			const result = game.spin();
@@ -274,7 +258,6 @@ describe("RouletteGame - Comprehensive Betting", () => {
 				type: BetType.ROULETTE_RED,
 				amount: 100,
 				numbers: [],
-				playerId: "player1",
 			});
 
 			const result = game.spin();
@@ -290,7 +273,6 @@ describe("RouletteGame - Comprehensive Betting", () => {
 				type: BetType.ROULETTE_FIRST_DOZEN,
 				amount: 50,
 				numbers: [],
-				playerId: "player1",
 			});
 
 			const result = game.spin();
@@ -336,14 +318,12 @@ describe("RouletteGame - Comprehensive Betting", () => {
 				type: BetType.ROULETTE_STRAIGHT_UP,
 				amount: 50,
 				numbers: [7],
-				playerId: "player1",
 			});
 
 			game.placeBet("player1", {
 				type: BetType.ROULETTE_RED,
 				amount: 100,
 				numbers: [],
-				playerId: "player1",
 			});
 
 			// Player 2 bets
@@ -351,7 +331,6 @@ describe("RouletteGame - Comprehensive Betting", () => {
 				type: BetType.ROULETTE_FIRST_DOZEN,
 				amount: 75,
 				numbers: [],
-				playerId: "player2",
 			});
 
 			expect(game.getActiveBets()).toHaveLength(3);
@@ -368,7 +347,6 @@ describe("RouletteGame - Comprehensive Betting", () => {
 				type: BetType.ROULETTE_RED,
 				amount: 50,
 				numbers: [],
-				playerId: "player1",
 			});
 
 			expect(game.getActiveBets()).toHaveLength(1);

@@ -1,4 +1,6 @@
 // Custom error types for the casino games
+import type { PlayingCard } from "./playing-card.ts";
+
 export abstract class CasinoError extends Error {
 	abstract readonly code: string;
 	readonly timestamp: Date;
@@ -160,15 +162,15 @@ export interface HandEvaluation {
 	rank: HandRank;
 	value: number; // Numeric value for comparison
 	description: string;
-	cards: import("./playing-card").PlayingCard[]; // The 5 cards that make the hand
-	kickers: import("./playing-card").PlayingCard[]; // Remaining cards for tiebreaking
+	cards: PlayingCard[]; // The 5 cards that make the hand
+	kickers: PlayingCard[]; // Remaining cards for tiebreaking
 }
 
 export interface PokerShowdown {
 	playerId: string;
 	hand: HandEvaluation;
-	holeCards: import("./playing-card").PlayingCard[];
-	bestHand: import("./playing-card").PlayingCard[];
+	holeCards: PlayingCard[];
+	bestHand: PlayingCard[];
 }
 
 // Game state types
@@ -214,8 +216,8 @@ export interface SideBet {
 	name: string;
 	description: string;
 	payout: number;
-	eligibleCards?: import("./playing-card").PlayingCard[];
-	conditions: (cards: import("./playing-card").PlayingCard[]) => boolean;
+	eligibleCards?: PlayingCard[];
+	conditions: (cards: PlayingCard[]) => boolean;
 }
 
 export interface Tournament {
@@ -236,7 +238,7 @@ export interface GameResult {
 	result: "win" | "lose" | "push" | "blackjack";
 	bet: number;
 	payout: number;
-	hand?: import("./playing-card").PlayingCard[];
+	hand?: PlayingCard[];
 }
 
 export interface RouletteSpinResult {
@@ -257,8 +259,8 @@ export interface PokerHandEvaluation {
 	rank: HandRank;
 	value: number;
 	description: string;
-	cards: import("./playing-card").PlayingCard[];
-	kickers?: import("./playing-card").PlayingCard[];
+	cards: PlayingCard[];
+	kickers?: PlayingCard[];
 }
 
 export interface PokerShowdownResult {
@@ -266,8 +268,8 @@ export interface PokerShowdownResult {
 	handEvaluations: Array<{
 		playerId: string;
 		evaluation: PokerHandEvaluation;
-		holeCards: import("./playing-card").PlayingCard[];
-		bestHand: import("./playing-card").PlayingCard[];
+		holeCards: PlayingCard[];
+		bestHand: PlayingCard[];
 	}>;
 	pot: number;
 }

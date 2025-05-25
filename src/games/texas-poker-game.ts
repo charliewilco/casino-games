@@ -1,13 +1,13 @@
-import { Deck } from "../deck";
-import type { PlayingCard } from "../playing-card";
-import { PokerHandEvaluator } from "../poker-evaluator";
+import { Deck } from "../deck.ts";
+import type { PlayingCard } from "../playing-card.ts";
+import { PokerHandEvaluator } from "../poker-evaluator.ts";
 import {
 	GameStateError,
 	InvalidBetError,
 	InsufficientFundsError,
 	type HandEvaluation,
 	type PokerShowdown,
-} from "../types";
+} from "../types.ts";
 
 export interface PokerPlayer {
 	id: string;

@@ -72,9 +72,9 @@ describe("BlackjackGame - Advanced Features", () => {
 
 			const bets = game.getCurrentBets();
 			expect(bets).toHaveLength(2);
-			expect(
-				bets.find((bet) => bet.type === BetType.BLACKJACK_INSURANCE)?.amount,
-			).toBe(10);
+			expect(bets.find((bet) => bet.type === BetType.INSURANCE)?.amount).toBe(
+				10,
+			);
 		});
 	});
 
@@ -122,9 +122,9 @@ describe("BlackjackGame - Advanced Features", () => {
 			try {
 				game.split("player1");
 				// If split succeeds, check that there are now two hands
-				const gameState = game.getGameState();
+				// const gameState = game.getGameState();
 				// Implementation would need to expose split hands
-			} catch (error) {
+			} catch (error: any) {
 				// Expected if no pairs in hand
 				expect(error.message).toContain("Cannot split");
 			}
@@ -171,12 +171,12 @@ describe("BlackjackGame - Advanced Features", () => {
 			// Note: Insurance is only available when dealer shows Ace
 			// Since we can't control the deck in this test, we test the general case
 			try {
-				game.placeBet("player1", 50, BetType.BLACKJACK_INSURANCE);
+				game.placeBet("player1", 50, BetType.INSURANCE);
 				const bets = game.getCurrentBets();
 				expect(
-					bets.find((bet) => bet.type === BetType.BLACKJACK_INSURANCE),
+					bets.find((bet) => bet.type === BetType.INSURANCE),
 				).toBeDefined();
-			} catch (error) {
+			} catch (error: any) {
 				// Expected if dealer doesn't show Ace
 				expect(error.message).toContain("Insurance");
 			}

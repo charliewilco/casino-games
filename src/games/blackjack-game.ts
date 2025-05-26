@@ -1,4 +1,4 @@
-import { DeckShoe } from "../deck.ts";
+import { DeckShoe, type ShuffleFn } from "../deck.ts";
 import type { PlayingCard } from "../playing-card.ts";
 import {
 	BetType,
@@ -89,17 +89,15 @@ export interface GameResult {
 }
 
 /**
- * A comprehensive blackjack game implementation supporting multiple players,
- * splitting, doubling down, surrender, insurance, and various game rules.
- *
- * @example
- * ```typescript
- * const game = new BlackjackGame(6, { allowSurrender: true });
- * game.addPlayer({ id: "player1", balance: 1000 });
- * game.startBettingPhase();
- * game.placeBet("player1", 100);
- * game.startRound();
- * ```
+ * Represents the current phase of a blackjack game.
+ * - WAITING_FOR_PLAYERS: Waiting for players to join.
+ * - BETTING_PHASE: Players may place bets.
+ * - DEAL_PHASE: Initial cards are being dealt.
+ * - PLAYER_ACTION_PHASE: Players are taking actions (hit, stand, etc.).
+ * - INSURANCE_OFFERED: Insurance is offered if dealer shows an Ace.
+ * - DEALER_PLAY_PHASE: Dealer is playing out their hand.
+ * - ROUND_RESULTS: Results are being calculated and payouts made.
+ * - ENDED: The game has ended.
  */
 export enum GamePhase {
 	WAITING_FOR_PLAYERS = "WAITING_FOR_PLAYERS",
@@ -112,6 +110,18 @@ export enum GamePhase {
 	ENDED = "ENDED",
 }
 
+/**
+ * A snapshot of the full state of a blackjack game, suitable for UI or debugging.
+ *
+ * @property phase The current phase of the game.
+ * @property players The list of all players in the game.
+ * @property playerHands All hands for each player, keyed by player ID.
+ * @property dealer The dealer's cards and blackjack status.
+ * @property currentPlayer The ID of the player whose turn it is, or null if not in action phase.
+ * @property activeBets All active bets, keyed by player ID.
+ * @property insuranceBets All insurance bets, keyed by player ID.
+ * @property statistics Game statistics (hands played, total bet amount).
+ */
 export interface BlackjackGameState {
 	phase: GamePhase;
 	players: BlackjackPlayer[];
@@ -123,17 +133,41 @@ export interface BlackjackGameState {
 	statistics: { handsPlayed: number; totalBetAmount: number };
 }
 
+/**
+ * The main Blackjack game engine. Supports multi-player, splitting, doubling down, surrender, insurance, and customizable rules.
+ *
+ * Usage:
+ *   const game = new BlackjackGame(6, { allowSurrender: true });
+ *   game.addPlayer({ id: "player1", balance: 1000 });
+ *   game.startBettingPhase();
+ *   game.placeBet("player1", 100, BetType.BLACKJACK_MAIN);
+ *   game.startRound();
+ *
+ * @class
+ * @param decks Number of decks to use in the shoe (default: 8)
+ * @param options Custom game options to override defaults
+ * @param shuffleFn Optional shuffle function for the deck (for testing or custom shuffling)
+ */
 export class BlackjackGame {
 	private shoe: DeckShoe;
+	/** Dealer state: cards and blackjack status */
 	private dealer: { cards: PlayingCard[]; isBlackjack: boolean };
+	/** All players in the game, mapped by player ID */
 	private players: Map<string, BlackjackPlayer>;
+	/** All hands for each player, mapped by player ID */
 	private playerHands: Map<string, BlackjackHand[]>;
+	/** The ID of the player whose turn it is, or null if not in action phase */
 	private currentPlayer: string | null = null;
+	/** The current phase of the game (see GamePhase enum) */
 	private gamePhase: GamePhase = GamePhase.WAITING_FOR_PLAYERS;
+	/** Game rules and configuration */
 	private options: BlackjackOptions;
+	/** Insurance bets, mapped by player ID */
 	private insuranceBets: Map<string, number> = new Map();
+	/** All active bets, mapped by player ID */
 	private activeBets: Map<string, Array<{ amount: number; type: BetType }>> =
 		new Map();
+	/** Game statistics (hands played, total bet amount) */
 	private gameStats = { handsPlayed: 0, totalBetAmount: 0 };
 
 	public getCurrentPhase(): GamePhase {
@@ -146,8 +180,12 @@ export class BlackjackGame {
 	 * @param decks - Number of decks to use in the shoe (default: 8)
 	 * @param options - Custom game options to override defaults
 	 */
-	constructor(decks = 8, options: Partial<BlackjackOptions> = {}) {
-		this.shoe = new DeckShoe(decks);
+	constructor(
+		decks = 8,
+		options: Partial<BlackjackOptions> = {},
+		shuffleFn?: ShuffleFn<PlayingCard>,
+	) {
+		this.shoe = new DeckShoe(decks, shuffleFn);
 		this.dealer = { cards: [], isBlackjack: false };
 		this.players = new Map();
 		this.playerHands = new Map();

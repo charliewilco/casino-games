@@ -101,19 +101,49 @@ export interface GameResult {
  * game.startRound();
  * ```
  */
+export enum GamePhase {
+	WAITING_FOR_PLAYERS = "WAITING_FOR_PLAYERS",
+	BETTING_PHASE = "BETTING_PHASE",
+	DEAL_PHASE = "DEAL_PHASE",
+	PLAYER_ACTION_PHASE = "PLAYER_ACTION_PHASE",
+	INSURANCE_OFFERED = "INSURANCE_OFFERED",
+	DEALER_PLAY_PHASE = "DEALER_PLAY_PHASE",
+	ROUND_RESULTS = "ROUND_RESULTS",
+	ENDED = "ENDED",
+}
+
 export class BlackjackGame {
 	private shoe: DeckShoe;
 	private dealer: { cards: PlayingCard[]; isBlackjack: boolean };
 	private players: Map<string, BlackjackPlayer>;
 	private playerHands: Map<string, BlackjackHand[]>;
 	private currentPlayer: string | null = null;
-	private gameInProgress = false;
-	private bettingPhase = false;
+	private gamePhase: GamePhase = GamePhase.WAITING_FOR_PLAYERS;
+	/**
+	 * @deprecated Use getCurrentPhase() instead
+	 */
+	public get gameInProgress(): boolean {
+		return (
+			this.gamePhase === GamePhase.PLAYER_ACTION_PHASE ||
+			this.gamePhase === GamePhase.INSURANCE_OFFERED ||
+			this.gamePhase === GamePhase.DEALER_PLAY_PHASE
+		);
+	}
+	/**
+	 * @deprecated Use getCurrentPhase() instead
+	 */
+	public get bettingPhase(): boolean {
+		return this.gamePhase === GamePhase.BETTING_PHASE;
+	}
 	private options: BlackjackOptions;
 	private insuranceBets: Map<string, number> = new Map();
 	private activeBets: Map<string, Array<{ amount: number; type: BetType }>> =
 		new Map();
 	private gameStats = { handsPlayed: 0, totalBetAmount: 0 };
+
+	public getCurrentPhase(): GamePhase {
+		return this.gamePhase;
+	}
 
 	/**
 	 * Creates a new blackjack game instance.
@@ -138,6 +168,7 @@ export class BlackjackGame {
 			maxBet: 1000,
 			...options,
 		};
+		this.gamePhase = GamePhase.WAITING_FOR_PLAYERS;
 	}
 
 	// Player management
@@ -153,6 +184,12 @@ export class BlackjackGame {
 		}
 		this.players.set(player.id, player);
 		this.playerHands.set(player.id, []);
+		if (
+			this.gamePhase === GamePhase.WAITING_FOR_PLAYERS &&
+			this.players.size > 0
+		) {
+			this.gamePhase = GamePhase.BETTING_PHASE;
+		}
 	}
 
 	/**
@@ -162,11 +199,19 @@ export class BlackjackGame {
 	 * @throws {GameStateError} If trying to remove the current player during an active game
 	 */
 	public removePlayer(playerId: string): void {
-		if (this.gameInProgress && this.currentPlayer === playerId) {
+		if (
+			(this.gamePhase === GamePhase.PLAYER_ACTION_PHASE ||
+				this.gamePhase === GamePhase.INSURANCE_OFFERED ||
+				this.gamePhase === GamePhase.DEALER_PLAY_PHASE) &&
+			this.currentPlayer === playerId
+		) {
 			throw new GameStateError("Cannot remove current player during game");
 		}
 		this.players.delete(playerId);
 		this.playerHands.delete(playerId);
+		if (this.players.size === 0) {
+			this.gamePhase = GamePhase.WAITING_FOR_PLAYERS;
+		}
 	}
 
 	/**
@@ -224,10 +269,14 @@ export class BlackjackGame {
 	 * @throws {GameStateError} If a game is already in progress
 	 */
 	public startBettingPhase(): void {
-		if (this.gameInProgress) {
+		if (
+			this.gamePhase === GamePhase.PLAYER_ACTION_PHASE ||
+			this.gamePhase === GamePhase.INSURANCE_OFFERED ||
+			this.gamePhase === GamePhase.DEALER_PLAY_PHASE
+		) {
 			throw new GameStateError("Game already in progress");
 		}
-		this.bettingPhase = true;
+		this.gamePhase = GamePhase.BETTING_PHASE;
 		this.playerHands.forEach((hands, playerId) => {
 			this.playerHands.set(playerId, []);
 		});
@@ -262,7 +311,11 @@ export class BlackjackGame {
 		betType: BetType = BetType.BLACKJACK_MAIN,
 	): void {
 		// Auto-start betting phase if not already started
-		if (!this.bettingPhase && !this.gameInProgress) {
+		if (
+			this.gamePhase !== GamePhase.BETTING_PHASE &&
+			this.gamePhase !== GamePhase.PLAYER_ACTION_PHASE &&
+			this.gamePhase !== GamePhase.INSURANCE_OFFERED
+		) {
 			this.startBettingPhase();
 		}
 
@@ -311,7 +364,10 @@ export class BlackjackGame {
 			}
 
 			// Check betting phase for non-insurance bets
-			if (!this.bettingPhase && finalBetType !== BetType.INSURANCE) {
+			if (
+				this.gamePhase !== GamePhase.BETTING_PHASE &&
+				finalBetType !== BetType.INSURANCE
+			) {
 				throw new GameStateError("Not in betting phase");
 			}
 		}
@@ -361,7 +417,7 @@ export class BlackjackGame {
 	 * @throws {GameStateError} If not in betting phase or no players have placed bets
 	 */
 	public startRound(): void {
-		if (!this.bettingPhase) {
+		if (this.gamePhase !== GamePhase.BETTING_PHASE) {
 			throw new GameStateError(
 				"Must start betting phase before starting round",
 			);
@@ -375,8 +431,7 @@ export class BlackjackGame {
 			throw new GameStateError("No players have placed bets");
 		}
 
-		this.bettingPhase = false;
-		this.gameInProgress = true;
+		this.gamePhase = GamePhase.DEAL_PHASE;
 
 		// Increment hands played counter
 		this.gameStats.handsPlayed += 1;
@@ -394,6 +449,8 @@ export class BlackjackGame {
 		// Deal dealer cards (2 cards, one face down)
 		this.dealer.cards.push(...this.shoe.draw(2));
 		this.dealer.isBlackjack = this.isBlackjack(this.dealer.cards);
+
+		this.gamePhase = GamePhase.PLAYER_ACTION_PHASE;
 	}
 
 	// Legacy compatibility methods
@@ -407,7 +464,7 @@ export class BlackjackGame {
 		// For backwards compatibility - create a simple game for testing
 		this.dealer.cards = [];
 		this.dealer.isBlackjack = false;
-		this.gameInProgress = true;
+		this.gamePhase = GamePhase.PLAYER_ACTION_PHASE;
 
 		// Create a default player if none exists
 		if (this.players.size === 0) {
@@ -561,7 +618,7 @@ export class BlackjackGame {
 	 *
 	 * @param playerId - ID of the player
 	 * @param handIndex - Index of the hand (for split hands, default: 0)
-	 * @returns "player", "dealer", "tie", or null if no active hand
+	 * @returns "player", "dealer", "tie" | null if no active hand
 	 */
 	public getWinnerMulti(
 		playerId: string,
@@ -889,7 +946,11 @@ export class BlackjackGame {
 	 * @throws {GameStateError} If no active round
 	 */
 	public finishRound(): GameResult[] {
-		if (!this.gameInProgress) {
+		if (
+			this.gamePhase !== GamePhase.PLAYER_ACTION_PHASE &&
+			this.gamePhase !== GamePhase.DEALER_PLAY_PHASE &&
+			this.gamePhase !== GamePhase.INSURANCE_OFFERED
+		) {
 			throw new GameStateError("No active round");
 		}
 
@@ -952,7 +1013,7 @@ export class BlackjackGame {
 		}
 
 		// Reset game state
-		this.gameInProgress = false;
+		this.gamePhase = GamePhase.ROUND_RESULTS;
 		this.currentPlayer = null;
 
 		return results;

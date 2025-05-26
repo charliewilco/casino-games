@@ -1,5 +1,5 @@
 import { describe, expect, test } from "@jest/globals";
-import { Deck } from "../src/deck";
+import { Deck } from "../src/deck.ts";
 
 describe("Deck", () => {
 	test("should create a standard deck of cards", () => {

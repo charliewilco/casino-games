@@ -33,10 +33,13 @@ jobs:
     
     - name: Run tests
       run: pnpm test
+
     - name: Coverage report
-      run: pnpm coverage
-    - name: Build project
-      run: pnpm build
+      uses: ArtiomTr/jest-coverage-report-action@v2
+      with:
+        coverage-file: 'coverage/coverage-final.json'
+        coverage-format: 'json'
+        test-script: 'pnpm coverage'
 
   build:
     runs-on: ubuntu-latest

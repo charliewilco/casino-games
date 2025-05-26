@@ -38,7 +38,9 @@
 		"testMatch": ["<rootDir>/test/**/*.(spec|test).[jt]s"],
 		"transform": {
 			"^.+\\.(t|j)sx?$": "@swc/jest"
-		}
+		},
+		"coverageReporters": ["json"],
+		"reporters": ["github-actions"]
 	},
 	"pnpm": {
 		"onlyBuiltDependencies": ["@biomejs/biome"]

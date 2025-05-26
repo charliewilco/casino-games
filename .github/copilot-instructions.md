@@ -4,4 +4,5 @@
 - ideally this project is meant to be used in React project
 - assume shuffling functions will be supplied by the consuming application
 - do not add dependencies
+- use JSDoc comments unless instructed not to use them
 - if tests are consistently failing remember to run `pnpm jest --clearCache`

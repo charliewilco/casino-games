@@ -15,6 +15,7 @@ export {
 	type BlackjackHand,
 	type BlackjackOptions,
 	type GameResult as BlackjackGameResult,
+	type GamePhase as BlackjackGamePhase,
 	type BlackjackGameState,
 } from "./games/blackjack-game.ts";
 export {

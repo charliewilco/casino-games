@@ -9,7 +9,13 @@ export {
 } from "./playing-card.ts";
 
 // Game engines
-export { BlackjackGame } from "./games/blackjack-game.ts";
+export {
+	BlackjackGame,
+	type BlackjackPlayer,
+	type BlackjackHand,
+	type BlackjackOptions,
+	type GameResult as BlackjackGameResult,
+} from "./games/blackjack-game.ts";
 export {
 	RouletteGame,
 	type Bet,

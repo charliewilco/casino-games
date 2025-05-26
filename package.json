@@ -14,6 +14,7 @@
 		"lint": "biome lint",
 		"format": "biome format --write",
 		"test": "jest --verbose --silent --config=./config/jest.config.cjs",
+		"coverage": "jest --verbose --silent --config=./config/jest.config.cjs --coverage",
 		"example": "tsx ./examples/test-implementation.ts",
 		"prepublish": "biome format --write",
 		"postversion": "biome format --write"

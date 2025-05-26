@@ -7,10 +7,6 @@ settings:
 importers:
 
   .:
-    dependencies:
-      '@charliewilco/knxwledge':
-        specifier: ^2.0.1
-        version: 2.0.1
     devDependencies:
       '@biomejs/biome':
         specifier: 1.9.4
@@ -262,9 +258,6 @@ packages:
     engines: {node: '>=14.21.3'}
     cpu: [x64]
     os: [win32]
-
-  '@charliewilco/knxwledge@2.0.1':
-    resolution: {integrity: sha512-DUQyqW/5fbHC65iWwjwOry2WDOJ4F7aeRKY4++qav7Fivba6jGeAeH5z0SYq/dHPmwiZzF00uEbshHaokgZDhQ==}
 
   '@emnapi/core@1.4.3':
     resolution: {integrity: sha512-4m62DuCE07lw01soJwPiBGC0nAww0Q+RY70VZ+n49yDIO13yyinhbWCeNnaob0lakDtWQzSdtNWzJeOJt2ma+g==}
@@ -1949,8 +1942,6 @@ snapshots:
 
   '@biomejs/cli-win32-x64@1.9.4':
     optional: true
-
-  '@charliewilco/knxwledge@2.0.1': {}
 
   '@emnapi/core@1.4.3':
     dependencies:

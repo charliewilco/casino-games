@@ -45,8 +45,5 @@
 	},
 	"publishConfig": {
 		"@charliewilco:registry": "https://npm.pkg.github.com/"
-	},
-	"dependencies": {
-		"@charliewilco/knxwledge": "^2.0.1"
 	}
 }

@@ -34,12 +34,9 @@ jobs:
     - name: Run tests
       run: pnpm test
 
-    - name: Coverage report
-      uses: ArtiomTr/jest-coverage-report-action@v2
-      with:
-        coverage-file: 'coverage/coverage-final.json'
-        coverage-format: 'json'
-        test-script: 'pnpm coverage'
+    - run: pnpm coverage
+    - name: Coverage Report
+      uses: MishaKav/jest-coverage-comment@main
 
   build:
     runs-on: ubuntu-latest

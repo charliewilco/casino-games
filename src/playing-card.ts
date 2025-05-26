@@ -78,3 +78,7 @@ export const createStandardDeck = (): PlayingCard[] => {
 
 	return deck;
 };
+
+export function getCardText(card: PlayingCard): string {
+	return `${card.rank}${card.suit}`;
+}

@@ -16,17 +16,22 @@
 		"test": "jest --verbose --silent",
 		"coverage": "jest --verbose --silent --coverage",
 		"prepublish": "biome format --write",
-		"postversion": "biome format --write"
+		"postversion": "biome format --write",
+		"codegen": "xstate typegen ./src/machines/*.ts "
 	},
 	"keywords": [],
 	"author": "Charlie <charliewilc0@pm.me>",
 	"license": "BSD-3-Clause",
 	"packageManager": "pnpm@10.6.1",
+	"peerDependencies": {
+		"xstate": "^5.19.3"
+	},
 	"devDependencies": {
 		"@biomejs/biome": "1.9.4",
 		"@jest/globals": "^29.7.0",
 		"@swc/core": "^1.11.29",
 		"@swc/jest": "^0.2.38",
+		"@xstate/cli": "^0.5.17",
 		"jest": "^29.7.0",
 		"lefthook": "^1.11.13",
 		"publint": "^0.3.12",
